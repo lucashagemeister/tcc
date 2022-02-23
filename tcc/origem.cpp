@@ -113,6 +113,7 @@ list<list<int> > quineMcCluskey(list<list<int> > nested_list, list<list<int>>iso
 	int flag_continuar_recursao_isop = 0;
 	int foi_usado = 0;
 	list <int> novo;
+	list <int> linha_isop;
 	int count;
 	for (auto i = nested_list.begin(); i != nested_list.end(); ++i) {
 		nested_list_aux.pop_front();
@@ -146,16 +147,16 @@ list<list<int> > quineMcCluskey(list<list<int> > nested_list, list<list<int>>iso
 				flag_continuar_recursao_isop = 1;
 			}
 
-			//problema está aqui: está quebrando o código
-			if (count == 0) {//significa que o primeiro cara não se combinou com ninguém da lista, logo ele deve ser incluído na isop
+			if (count == 0) {
 				printf("\n----PASSEI POR AQUI!------\n");
-				list <int> linha_isop;
+				
 				list<int>::iterator single_list_itr3 = single_list_pointer.begin();
 				while (single_list_itr3 != single_list_pointer.end()) {
-					linha_isop.push_back(*single_list_itr);
+					linha_isop.push_back(*single_list_itr3);
 					single_list_itr3++;
 				}
 				isop_preenchido_na_recursao_ne.push_back(linha_isop);
+				linha_isop.clear();
 				printf("\n----ISOP SENDO PREENCHIDO!------\n");
 				printNestedList(isop_preenchido_na_recursao_ne);
 			}
@@ -188,9 +189,47 @@ list<list<int> > quineMcCluskey(list<list<int> > nested_list, list<list<int>>iso
 
 /* PASSOS*/
 
-bool checkUnateness() {
+bool checkUnateness(list < list <int>> funcaoASerChecada) {
+	bool isUnate = true;
+	list<int> countZeros;
+	list<int> countOnes;
 
-	return false;
+	//for para inicializar as listas dos contadores
+	
+	for (auto i = funcaoASerChecada.begin(); i != funcaoASerChecada.end(); ++i) {
+		list<int>& single_list_pointerX = *i;
+		list<int>::iterator single_list_itrX = single_list_pointerX.begin();
+		while (single_list_itrX != single_list_pointerX.end()) {
+			countZeros.push_back(0);
+			countOnes.push_back(0);
+			single_list_itrX++;
+		}
+		break; //que bagaceiro!
+	}
+
+
+	for (auto i = funcaoASerChecada.begin(); i != funcaoASerChecada.end(); ++i) {
+		list<int>& single_list_pointer = *i;
+		list<int>::iterator single_list_itr = single_list_pointer.begin();
+
+		list<int>::iterator zeros_itr = countZeros.begin();
+		list<int>::iterator ones_itr = countOnes.begin();
+
+		while (single_list_itr != single_list_pointer.end()) {
+			if (*single_list_itr == 0) {
+				*zeros_itr+=1;
+			}
+			else if (*single_list_itr == 1) {
+				*ones_itr+=1;
+			}
+			single_list_itr++;
+			zeros_itr++;
+			ones_itr++;
+		}
+	}
+
+
+	return isUnate;
 }
 
 void chowParametersComputation(int arr[7][4]) {
@@ -226,13 +265,42 @@ int thresholdValueComputation(int *w) {
 }
 
 int main() {
+
 	int numeroInputs;
 	int numeroMinTermos;
 	int* valoresMinTermos;
 	int** tabela;
+	bool isTF;
 
 	list <list <int>> isop_preenchido_na_recursao;
-	
+
+	//numeroInputs = solicitarNumeroInputs();
+	//numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
+	//valoresMinTermos = (int*)malloc(numeroMinTermos * sizeof(int));
+	//solicitarMinTermos(numeroMinTermos, valoresMinTermos);
+
+
+	//tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
+
+	//list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
+	//printNestedList(sop);
+	//printf("\n----------------\n");
+	//list <list <int>> isop = quineMcCluskey(sop, isop_preenchido_na_recursao);
+	//printf("\n------ISOP FINAL----\n");
+	//printNestedList(isop);
+	//printf("\n------ISOP FINAL----\n");
+	//printNestedList(isop);
+
+
+	/* ESTE VAI SER O CÓDIGO FINAL!
+	int numeroInputs;
+	int numeroMinTermos;
+	int* valoresMinTermos;
+	int** tabela;
+	bool isTF;
+
+	list <list <int>> isop_preenchido_na_recursao;
+
 	numeroInputs = solicitarNumeroInputs();
 	numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
 	valoresMinTermos = (int*)malloc(numeroMinTermos * sizeof(int));
@@ -241,40 +309,31 @@ int main() {
 
 	tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
 
-	list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
-	printNestedList(sop);
-	printf("\n----------------\n");
 	list <list <int>> isop = quineMcCluskey(sop, isop_preenchido_na_recursao);
-	printf("\n------ISOP FINAL----\n");
-	printNestedList(isop);
+	
+	if (checkUnateness(isop) == false){
+		isTF = false;
+	}
+	else{
+		chowParametersComputation(isop);
+		(...)
+	}
+	
+	*/
+
+
+
 	
 
-	/*
-	list <list <int>> isop;
-	list <int> linha1;
-	list <int> linha2;
-	list <int> linha3;
+	//list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
+	//printNestedList(sop);
+	//printf("\n----------------\n");
+	//list <list <int>> isop = quineMcCluskey(sop, isop_preenchido_na_recursao);
+	//printf("\n------ISOP FINAL----\n");
+	//printNestedList(isop);
+	
 
-	linha1.push_back(0);
-	linha1.push_back(0);
-	linha1.push_back(9);
-	linha1.push_back(9);
-	isop.push_back(linha1);
 
-	linha2.push_back(9);
-	linha2.push_back(1);
-	linha2.push_back(0);
-	linha2.push_back(1);
-	isop.push_back(linha2);
-
-	linha3.push_back(1);
-	linha3.push_back(1);
-	linha3.push_back(1);
-	linha3.push_back(0);
-	isop.push_back(linha3);
-
-	printNestedList(isop);
-	*/
 
 	/*TESTE CHOW'S PARAMETERS COMPUTATION!*/
 	//int arr[7][4];
@@ -327,29 +386,12 @@ int main() {
 	//int t = thresholdValueComputation(weights);
 	//cout << t << endl;
 	
-	/*
-	estrutura final!
-	list <list <int>> isop = quineMcCluskey(sop);
-	if (checkUnateness(isop) == false){
-		cout << "A função não é TF" << endl;
-	}
-	else {
-		a = chowParametersComputation(isop);
-		b = generationOfSystemOfIrredudantInequalities(a);
-		if (isAgainstVariableOrdering == true){
-			cout << "A função não é TF" << endl;
-		}
-		else{
-			weightAssignment(b);
+	
 
 
-		}
 
-	}
-	
-	
-	*/
-	
+
+
 	return 0;
 
 
