@@ -6,10 +6,10 @@
 #include <vector>
 #include <iterator>
 
-#define DONT_CARE = 9;
 
 using namespace std;
 
+#define DONTCARE  9
 
 
 /* FUNÇÕES PARA RECEBER A FUNÇÃO BOOLEANA DE ENTRADA E CRIAR A TABELA-VERDADE */
@@ -131,7 +131,7 @@ list<list<int> > quineMcCluskey(list<list<int> > nested_list, list<list<int>>iso
 
 				if (*single_list_itr != *single_list_itr2) {
 					distanceHamming++;
-					novo.push_back(9);  //9 = DONT_CARE
+					novo.push_back(DONTCARE);  
 
 				}
 				else {
@@ -232,7 +232,65 @@ bool checkUnateness(list < list <int>> funcaoASerChecada) {
 	return isUnate;
 }
 
-void chowParametersComputation(int arr[7][4]) {
+void chowParametersComputation(list < list <int>> funcaoASerChecada) {
+	list<int> countZeros;
+	list<int> countOnes;
+	list<int> chowParameters;
+	//for para inicializar as listas dos contadores
+
+	for (auto i = funcaoASerChecada.begin(); i != funcaoASerChecada.end(); ++i) {
+		list<int>& single_list_pointerX = *i;
+		list<int>::iterator single_list_itrX = single_list_pointerX.begin();
+		while (single_list_itrX != single_list_pointerX.end()) {
+			countZeros.push_back(0);
+			countOnes.push_back(0);
+			chowParameters.push_back(0);
+			single_list_itrX++;
+		}
+		break; //que bagaceiro!
+	}
+
+
+	for (auto i = funcaoASerChecada.begin(); i != funcaoASerChecada.end(); ++i) {
+		list<int>& single_list_pointer = *i;
+		list<int>::iterator single_list_itr = single_list_pointer.begin();
+
+		list<int>::iterator zeros_itr = countZeros.begin();
+		list<int>::iterator ones_itr = countOnes.begin();
+
+		while (single_list_itr != single_list_pointer.end()) {
+			if (*single_list_itr == 0) {
+				*zeros_itr += 1;
+			}
+			else if (*single_list_itr == 1) {
+				*ones_itr += 1;
+			}
+			single_list_itr++;
+			zeros_itr++;
+			ones_itr++;
+		}
+
+		list<int>::iterator n = countZeros.begin();
+		list<int>::iterator m = countOnes.begin();
+		list<int>::iterator p = chowParameters.begin();
+
+		while (p != chowParameters.end()) {
+			*p = 2*(* m) - 2*(* n);
+			p++;
+			m++;
+			n++;
+		}
+	}
+
+	printSingleList(chowParameters);
+
+
+	
+	
+	
+	
+	
+	/*
 	int m[4]={0,0,0,0};
 	int n[4]={0,0,0,0};
 	int p[4]={0,0,0,0};
@@ -251,6 +309,7 @@ void chowParametersComputation(int arr[7][4]) {
 	for (int i = 0; i < 4; i++) {
 		p[i] = 2 * m[i] - 2 * n[i];
 	}
+	*/
 }
 
 
@@ -323,60 +382,47 @@ int main() {
 
 
 
-	
-
-	//list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
-	//printNestedList(sop);
-	//printf("\n----------------\n");
-	//list <list <int>> isop = quineMcCluskey(sop, isop_preenchido_na_recursao);
-	//printf("\n------ISOP FINAL----\n");
-	//printNestedList(isop);
-	
-
-
 
 	/*TESTE CHOW'S PARAMETERS COMPUTATION!*/
-	//int arr[7][4];
-	//arr[0][0] = 0;
-	//arr[0][1] = 0;
-	//arr[0][2] = 0;
-	//arr[0][3] = 0;
+	list < list <int>> chowTeste;
+	list <int> linha1;
+	list <int> linha2;
+	list <int> linha3;
+	list <int> linha4;
+	list <int> linha5;
 
-	//arr[1][0] = 0;
-	//arr[1][1] = 0;
-	//arr[1][2] = 0;
-	//arr[1][3] = 1;
+	linha1.push_back(1);
+	linha1.push_back(0);
+	linha1.push_back(1);
+	linha1.push_back(1);
 
-	//arr[2][0] = 0;
-	//arr[2][1] = 0;
-	//arr[2][2] = 1;
-	//arr[2][3] = 0;
+	linha2.push_back(1);
+	linha2.push_back(1);
+	linha2.push_back(0);
+	linha2.push_back(0);
 
-	//arr[3][0] = 0;
-	//arr[3][1] = 0;
-	//arr[3][2] = 1;
-	//arr[3][3] = 1; 
+	linha3.push_back(1);
+	linha3.push_back(1);
+	linha3.push_back(0);
+	linha3.push_back(1);
 
-	//arr[4][0] = 0;
-	//arr[4][1] = 1;
-	//arr[4][2] = 0;
-	//arr[4][3] = 1;
+	linha4.push_back(1);
+	linha4.push_back(1);
+	linha4.push_back(1);
+	linha4.push_back(0);
 
-	//arr[5][0] = 1;
-	//arr[5][1] = 1;
-	//arr[5][2] = 0;
-	//arr[5][3] = 1;
+	linha5.push_back(1);
+	linha5.push_back(1);
+	linha5.push_back(1);
+	linha5.push_back(1);
 
-	//arr[6][0] = 1;
-	//arr[6][1] = 1;
-	//arr[6][2] = 1;
-	//arr[6][3] = 0;
+	chowTeste.push_back(linha1);
+	chowTeste.push_back(linha2);
+	chowTeste.push_back(linha3);
+	chowTeste.push_back(linha4);
+	chowTeste.push_back(linha5);
 
-	//chowParametersComputation(arr);
-
-
-
-
+	chowParametersComputation(chowTeste);
 	/*TESTE THRESHOLD VALUE COMPUTATION!*/
 	//int* weights;
 	//weights = (int*)malloc(3 * sizeof(int));
