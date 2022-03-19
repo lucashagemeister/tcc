@@ -303,30 +303,44 @@ list<int> chowParametersComputation(list < list <int>> funcaoASerChecada) {
 }
 
 //Inequações
-void inequalitiesSystemGeneration(list <list <int>>greater, list <list <int>> lesser) {
+list < list <int>> inequalitiesSystemGeneration(list <list <int>>greater, list <list <int>> lesser, bool ladoDaInequacao ) {
+	list < list <int>> g;
+	list < list <int>> l;
+
 	for (auto i = greater.begin(); i != greater.end(); ++i) {
 		for (auto j = lesser.begin(); j != lesser.end(); ++j) {
 			list<int>& single_list_pointer = *i;
 			list<int>& single_list_pointer2 = *j; 
 			list<int>::iterator single_list_itr = single_list_pointer.begin();
 			list<int>::iterator single_list_itr2 = single_list_pointer2.begin();
-
+			list <int> g_line;
+			list <int> l_line;
 			while (single_list_itr != single_list_pointer.end()) {
-				cout << *single_list_itr;
+				g_line.push_back(*single_list_itr);
 				single_list_itr++;
+					
 			}
 
-			cout << " > ";
 			while (single_list_itr2 != single_list_pointer2.end()) {
-				cout << *single_list_itr2;
+				l_line.push_back(*single_list_itr2);
 				single_list_itr2++;
 			}
 
-			cout << endl;
-
+			g.push_back(g_line);
+			l.push_back(l_line);
+			g_line.clear();
+			l_line.clear();
 		}
 	}
 
+	//printNestedList(g);
+	//cout << endl;
+	//printNestedList(l);
+
+	if (ladoDaInequacao == 0)
+		return g;
+	else
+		return l;
 }
 
 list <list <int>> inequalitiesSystemWithUpdatedVariables(list <list <int>>greater, list <int> chowParameters, int numberOfChows) {
@@ -377,19 +391,187 @@ list <list <int>> inequalitiesSystemWithUpdatedVariables(list <list <int>>greate
 }
 
 
-void inequalitiesSimplification(list < list <int>> greater, list < list <int>> lesser) {
-	//parte 1
+list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < list <int>> lesser, int n) {
+	
+	//parte 1: Elimination of variables that appear in both sides of inequalities (PRONTA!)
+	list <list <int>>::iterator gg = greater.begin();
+	list <list <int>>::iterator ll = lesser.begin();
 
+	while (gg != greater.end() && ll != lesser.end()) {
+		list<int>& pG = *gg;
+		list<int>& pL = *ll;
+		list<int>::iterator g = pG.begin();
+		list<int>::iterator l = pL.begin();
+
+		while (g != pG.end() && l != pL.end()) {
+			if (*g != 0 && *l != 0) {
+				if (*g == *l) {
+					*g = 0;
+					*l = 0;
+				}
+				else if (*g > *l) {
+					*g -= *l;
+					*l = 0;
+				}
+				else if (*g < *l) {
+					*g = 0;
+					*l -= *l;
+				}
+			}
+			g++;
+			l++;
+		}
+		gg++;
+		ll++;
+	}
+
+	/*parte 1 OK!*/
+
+	//parte 2: elimination of inequalities with no elements on the lesser side (PRONTA!)
+	list <list <int>>::iterator gg2 = greater.begin();
+	list <list <int>>::iterator ll2 = lesser.begin();
+	
+	while (gg2 != greater.end() && ll2 != lesser.end()) {
+		list<int>& pG2 = *gg2;
+		list<int>& pL2 = *ll2;
+		list<int>::iterator g2 = pG2.begin();
+		list<int>::iterator l2 = pL2.begin();
+		bool flag_apagarInequacao = 1;
+		
+		while (l2 != pL2.end()) {
+			if (*l2 != 0) {
+				flag_apagarInequacao = 0;
+			}
+			l2++;
+		}
+
+		
+		if (flag_apagarInequacao == 1) {
+			greater.erase(gg2++);
+			lesser.erase(ll2++);
+		} 
+		else {
+			gg2++;
+			ll2++;
+		}
+	}
+
+	//parte 3: Elimination of inequalities with a single element on the lesser side
+	list <list <int>>::iterator gg3 = greater.begin();
+	list <list <int>>::iterator ll3 = lesser.begin();
+	while (gg3 != greater.end() && ll3 != lesser.end()) {
+		list<int>& pG3 = *gg3;
+		list<int>& pL3 = *ll3;
+		list<int>::iterator g3 = pG3.begin();
+		list<int>::iterator l3 = pL3.begin();
+		bool flag_apagarInequacao = 1;
+		bool achei_o_1 = 0;
+
+		while (l3 != pL3.end()) {
+			if (*l3 > 1) {
+				flag_apagarInequacao = 0;
+			}
+			else if (*l3 == 1 && achei_o_1 == 0) {
+				achei_o_1 = 1;
+			}
+			else if (*l3 == 1 && achei_o_1 == 1) {
+				flag_apagarInequacao = 0;
+			}
+			l3++;
+		}
+
+
+		if (flag_apagarInequacao == 1) {
+			greater.erase(gg3++);
+			lesser.erase(ll3++);
+		}
+		else {
+			gg3++;
+			ll3++;
+		}
+	}
+
+	if (n == 1) {
+		return greater;
+	}
+	else if (n == 2) {
+		return lesser;
+	}
+}
+
+
+bool isAgainstVariableOrdering() {
+	//não entendi o que é pra fazer
+	return false;
+}
+
+void weightAssignment() {
 
 }
-int thresholdValueComputation(int *w) {
-	int high_value = 0;
-	for (int m = 0; m < sizeof(w); m++)	{
-		if (w[m] > high_value)
-			high_value = w[m];
+
+bool allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <int>> lesser, list <int> weights) {
+	list <list <int>>::iterator gg = greater.begin();
+	list <list <int>>::iterator ll = lesser.begin();
+	bool inequalitiesAreSatisfied = true;
+
+	while (gg != greater.end() && ll != lesser.end()) {
+		list<int>& pG = *gg;
+		list<int>& pL = *ll;
+		list<int>::iterator g = pG.begin();
+		list<int>::iterator l = pL.begin();
+		list<int>::iterator w = weights.begin();
+		int greaterSum = 0;
+		int lesserSum = 0;
+		while (g != pG.end() && l != pL.end() && w != weights.end()) { //dúvida: o tamanho de weights é o mesmo de greater e lesser?
+			greaterSum += (*g) * (*w);
+			lesserSum += (*l) * (*w);
+			w++;
+			g++;
+			l++;
+		}
+		if (lesserSum >= greaterSum) {
+			inequalitiesAreSatisfied = false;
+		}
+		gg++;
+		ll++;
 	}
+
+	return inequalitiesAreSatisfied; //ainda não testei esta função para saber se está certa ou não.
+}
+
+bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, int nVariables) {
+	int largestWeight = 0;
+	list<int>::iterator w = weights.begin();
+
+	while (w != weights.end()) {
+		if (*w > largestWeight) {
+			largestWeight = *w;
+		}
+		w++;
+	}
+	int maximumWeight = 2 * pow(((float)nVariables + 1) / 4, ((float)nVariables + 1) / 2); //Teorema 9.3.2.1 Muroga
+
+	if (largestWeight == maximumWeight) {
+		return true;
+	}
+	else {
+		return false; //ainda não testei esta função para saber se está certa ou não.
+	}
+}
+
+int thresholdValueComputation(list <int> weightedSummation) {
+	int high_value = 0;
+	list<int>::iterator sum = weightedSummation.begin();
+
+	while (sum != weightedSummation.end()) {
+		if (*sum < high_value) {
+			high_value = *sum;
+		}
+		sum++;
+	}
+
 	int threshold = high_value + 1;
-	return threshold;
+	return threshold; //ainda não testei esta função para saber se está certa ou não.
 }
 
 int main() {
@@ -504,21 +686,26 @@ int main() {
 	vwo.push_back(2);
 
 	int n = numberOfUpdatedVariables(chowParameters);
-	//cout << n << endl;
 
-	//inequalitiesSystemGeneration(greater_side, lesser_side);
+	list <list <int>> lado_esquerdo = inequalitiesSystemGeneration(greater_side, lesser_side, 0);
+
+	list <list <int>> lado_direito = inequalitiesSystemGeneration(greater_side, lesser_side, 1);
+
+
 	
 	list <list <int>> g_side;
 	list <list <int>> l_side;
 
-	g_side = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, n);
-	l_side = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, n);
+	g_side = inequalitiesSystemWithUpdatedVariables(lado_esquerdo, chowParameters, n);
+	l_side = inequalitiesSystemWithUpdatedVariables(lado_direito, chowParameters, n);
 
-	cout << "***************** Greater Side ******************" << endl;
-	printNestedList(g_side);
-	cout << "***************** Lesser Side ******************" << endl;
-	printNestedList(l_side);
-	inequalitiesSimplification(g_side, l_side);
+
+	list <list <int>> g_simplificado;
+	list <list <int>> l_simplificado;
+	
+	g_simplificado = inequalitiesSimplification(g_side, l_side,1);
+	l_simplificado = inequalitiesSimplification(g_side, l_side,2);
+	
 
 	return 0;
 
