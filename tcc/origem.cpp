@@ -393,7 +393,7 @@ list <list <int>> inequalitiesSystemWithUpdatedVariables(list <list <int>>greate
 
 list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < list <int>> lesser, int n) {
 	
-	//parte 1: Elimination of variables that appear in both sides of inequalities (PRONTA!)
+	//parte 1: Elimination of variables that appear in both sides of inequalities 
 	list <list <int>>::iterator gg = greater.begin();
 	list <list <int>>::iterator ll = lesser.begin();
 
@@ -425,9 +425,7 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 		ll++;
 	}
 
-	/*parte 1 OK!*/
-
-	//parte 2: elimination of inequalities with no elements on the lesser side (PRONTA!)
+	//parte 2: elimination of inequalities with no elements on the lesser side 
 	list <list <int>>::iterator gg2 = greater.begin();
 	list <list <int>>::iterator ll2 = lesser.begin();
 	
@@ -505,7 +503,25 @@ bool isAgainstVariableOrdering() {
 	return false;
 }
 
-void weightAssignment() {
+void weightAssignment(list <int> weights, list <int> vwo_updatedVariables, int nUpdatesVariables ) {
+	list <int>::iterator w_init = weights.begin();
+	
+	int count = nUpdatesVariables;
+	if (*w_init == 0) { //atribuição inicial
+		while (w_init != weights.end()) {
+			list <int>::iterator v_init = vwo_updatedVariables.begin();
+			while (v_init != vwo_updatedVariables.end()) {
+				if (*v_init == count - 1) {
+					*w_init = *v_init + 1;   //tá errado, sempre dá 5 4 3 2 1, arrumar isso!
+				}
+				v_init++;
+			}
+			w_init++;
+			count--;
+		}
+	}
+	printSingleList(weights);
+
 
 }
 
@@ -558,6 +574,132 @@ bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, 
 		return false; //ainda não testei esta função para saber se está certa ou não.
 	}
 }
+
+bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLessers,  list <bool> ineq_satisf, int nUpdVar) {
+
+	list <list <int>>::iterator gg = pGreaters.begin();
+	list <list <int>>::iterator ll = pLessers.begin();
+	list <bool>::iterator it1 = ineq_satisf.begin();
+	bool thereAreCW = false;
+
+	list <int> g_cw;
+	list <int> l_cw;
+	list <int> d_cw;
+
+	for (int i = 0; i < nUpdVar; i++) {
+		g_cw.push_back(0);
+		l_cw.push_back(0);
+		d_cw.push_back(0);	
+	}
+	
+
+	while (gg != pGreaters.end() && ll != pLessers.end()) {
+		list<int>& pG = *gg;
+		list<int>& pL = *ll;
+		list<int>::iterator g = pG.begin();
+		list<int>::iterator l = pL.begin();
+		
+		list <int>::iterator itG = g_cw.begin();
+		list <int>::iterator itL = l_cw.begin();
+		list <int>::iterator itD = d_cw.begin();
+
+		while (g != pG.end() && l != pL.end()) {		
+			
+			if (*it1 ==  false) {
+				*itG += *g;
+				*itL += *l;
+				*itD = *itG - *itL;
+			}
+
+			itG++;
+			itL++;
+			itD++;
+
+			g++;
+			l++;
+		}
+		it1++;
+		gg++;
+		ll++;
+		
+
+	}
+	
+	list <int>::iterator check_D = d_cw.begin();
+
+	while (check_D != d_cw.end()) {
+		if (*check_D > 0) {
+			thereAreCW = true;
+		}
+		check_D++;
+	}
+	return thereAreCW;
+}
+
+
+list <int> increasingCW(list <list <int>> pGreaters, list <list <int>> pLessers, list <bool> ineq_satisf, int nUpdVar, list <int> weightsAssigned) {
+
+	list <list <int>>::iterator gg = pGreaters.begin();
+	list <list <int>>::iterator ll = pLessers.begin();
+	list <bool>::iterator it1 = ineq_satisf.begin();
+	list <int>::iterator it2 = weightsAssigned.begin();
+
+	list <int> g_cw;
+	list <int> l_cw;
+	list <int> d_cw;
+
+	for (int i = 0; i < nUpdVar; i++) {
+		g_cw.push_back(0);
+		l_cw.push_back(0);
+		d_cw.push_back(0);
+	}
+
+
+	while (gg != pGreaters.end() && ll != pLessers.end()) {
+		list<int>& pG = *gg;
+		list<int>& pL = *ll;
+		list<int>::iterator g = pG.begin();
+		list<int>::iterator l = pL.begin();
+
+		list <int>::iterator itG = g_cw.begin();
+		list <int>::iterator itL = l_cw.begin();
+		list <int>::iterator itD = d_cw.begin();
+
+		while (g != pG.end() && l != pL.end()) {
+
+			if (*it1 == false) {
+				*itG += *g;
+				*itL += *l;
+				*itD = *itG - *itL;
+			}
+
+			itG++;
+			itL++;
+			itD++;
+
+			g++;
+			l++;
+		}
+		it1++;
+		gg++;
+		ll++;
+
+
+	}
+
+	list <int>::iterator check_D = d_cw.begin();
+
+	while (check_D != d_cw.end() && it2 != weightsAssigned.end()) {
+		if (*check_D > 0) {
+			*it2+=1;
+		}
+		check_D++;
+		it2++;
+	}
+	
+	return weightsAssigned;
+}
+
 
 int thresholdValueComputation(list <int> weightedSummation) {
 	int high_value = 0;
@@ -631,7 +773,7 @@ int main() {
 	*/
 
 
-	
+	/*
 	list <list <int>> greater_side;
 	list <list <int>> lesser_side;
 
@@ -705,8 +847,190 @@ int main() {
 	
 	g_simplificado = inequalitiesSimplification(g_side, l_side,1);
 	l_simplificado = inequalitiesSimplification(g_side, l_side,2);
-	
+	*/
 
+
+
+	/*
+	list <int> vwo_variaveisAtualizadas;
+	vwo_variaveisAtualizadas.push_back(0);
+	vwo_variaveisAtualizadas.push_back(4);
+	vwo_variaveisAtualizadas.push_back(2);
+	vwo_variaveisAtualizadas.push_back(1);
+	vwo_variaveisAtualizadas.push_back(3);
+
+	list <int> weights_variaveisAtualizadas;
+	weights_variaveisAtualizadas.push_back(0);
+	weights_variaveisAtualizadas.push_back(0);
+	weights_variaveisAtualizadas.push_back(0);
+	weights_variaveisAtualizadas.push_back(0);
+	weights_variaveisAtualizadas.push_back(0);
+
+	weightAssignment(weights_variaveisAtualizadas, vwo_variaveisAtualizadas,5);
+	*/
+
+	/*
+	list <list <int>> pGreaters;
+	list <list <int>> pSmallers;
+	list <bool> ineq_satisf;
+	int n = 5;
+
+	ineq_satisf.push_back(false);
+	ineq_satisf.push_back(false);
+	ineq_satisf.push_back(false);
+	ineq_satisf.push_back(false);
+	ineq_satisf.push_back(false);
+	ineq_satisf.push_back(false);
+	ineq_satisf.push_back(true);
+	ineq_satisf.push_back(true);
+
+	list <int> g1;
+	list <int> g2;
+	list <int> g3;
+	list <int> g4;
+	list <int> g5;
+	list <int> g6;
+	list <int> g7;
+	list <int> g8;
+
+	list <int> l1;
+	list <int> l2;
+	list <int> l3;
+	list <int> l4;
+	list <int> l5;
+	list <int> l6;
+	list <int> l7;
+	list <int> l8;
+
+	g1.push_back(2);
+	g1.push_back(0);
+	g1.push_back(0);
+	g1.push_back(0);
+	g1.push_back(0);
+
+	g2.push_back(1);
+	g2.push_back(0);
+	g2.push_back(0);
+	g2.push_back(0);
+	g2.push_back(0);
+
+	g3.push_back(0);
+	g3.push_back(1);
+	g3.push_back(0);
+	g3.push_back(0);
+	g3.push_back(0);
+
+	g4.push_back(0);
+	g4.push_back(2);
+	g4.push_back(0);
+	g4.push_back(0);
+	g4.push_back(0);
+
+	g5.push_back(0);
+	g5.push_back(2);
+	g5.push_back(0);
+	g5.push_back(0);
+	g5.push_back(0);
+
+	g6.push_back(1);
+	g6.push_back(0);
+	g6.push_back(0);
+	g6.push_back(0);
+	g6.push_back(0);
+
+	g7.push_back(0);
+	g7.push_back(1);
+	g7.push_back(1);
+	g7.push_back(0);
+	g7.push_back(0);
+
+	g8.push_back(0);
+	g8.push_back(1);
+	g8.push_back(0);
+	g8.push_back(1);
+	g8.push_back(0);
+
+
+	l1.push_back(0);
+	l1.push_back(2);
+	l1.push_back(0);
+	l1.push_back(1);
+	l1.push_back(0);
+
+	l2.push_back(0);
+	l2.push_back(0);
+	l2.push_back(1);
+	l2.push_back(1);
+	l2.push_back(1);
+
+	l3.push_back(0);
+	l3.push_back(0);
+	l3.push_back(1);
+	l3.push_back(0);
+	l3.push_back(1);
+
+	l4.push_back(1);
+	l4.push_back(0);
+	l4.push_back(0);
+	l4.push_back(1);
+	l4.push_back(1);
+
+	l5.push_back(1);
+	l5.push_back(0);
+	l5.push_back(1);
+	l5.push_back(0);
+	l5.push_back(0);
+
+	l6.push_back(0);
+	l6.push_back(1);
+	l6.push_back(0);
+	l6.push_back(0);
+	l6.push_back(1);
+
+	l7.push_back(1);
+	l7.push_back(0);
+	l7.push_back(0);
+	l7.push_back(0);
+	l7.push_back(1);
+
+	l8.push_back(1);
+	l8.push_back(0);
+	l8.push_back(0);
+	l8.push_back(0);
+	l8.push_back(0);
+
+	pGreaters.push_back(g1);
+	pGreaters.push_back(g2);
+	pGreaters.push_back(g3);
+	pGreaters.push_back(g4);
+	pGreaters.push_back(g5);
+	pGreaters.push_back(g6);
+	pGreaters.push_back(g7);
+	pGreaters.push_back(g8);
+
+	pSmallers.push_back(l1);
+	pSmallers.push_back(l2);
+	pSmallers.push_back(l3);
+	pSmallers.push_back(l4);
+	pSmallers.push_back(l5);
+	pSmallers.push_back(l6);
+	pSmallers.push_back(l7);
+	pSmallers.push_back(l8);
+
+	list <int> w;
+	w.push_back(5);
+	w.push_back(4);
+	w.push_back(3);
+	w.push_back(2);
+	w.push_back(1);
+	*/
+
+	/*
+	while (existsCWToBeIncrased(pGreaters, pSmallers, ineq_satisf, n) == true) {
+		w =increasingCW(pGreaters, pSmallers, ineq_satisf, n,w);
+	}
+	printSingleList(w);
+	*/
 	return 0;
 
 
