@@ -10,6 +10,9 @@
 using namespace std;
 
 #define DONTCARE  9
+#define ISNOT_TF 0
+#define IS_TF 1
+#define IS_UNDEFINED 2
 
 list <list <int>> isop;
 
@@ -32,6 +35,17 @@ void solicitarMinTermos(int m, int* v) {
 		cin >> v[i];
 	}
 
+}
+
+void negarFuncaoBooleana(int* funcao, int *funcao_neg, int m) {
+	for (int i = 0; i < m; i++) {
+		if (funcao[i] == 1) {
+			funcao_neg[i] = 0;
+		}
+		else if (funcao[i] == 0) {
+			funcao_neg[i] = 1;
+		}
+	}
 }
 
 int** criarTabelaVerdade(int linhas, int colunas) {
@@ -110,86 +124,100 @@ void printNestedList(list<list<int> > nested_list) {
 	cout << "]";
 }
 
-list<list<int>> quineMcCluskey(list<list<int> > nested_list, list<list<int>>isop_preenchido_na_recursao) {
-	list < list<int>> nested_list_aux = nested_list;
-	list < list <int>> isop_preenchido_na_recursao_ne = isop_preenchido_na_recursao;
-	list <list<int>> isop;
+list<list<int>> quineMcCluskey(list<list<int> > sop, list<list<int>>isop_incompleta) {
+	list <list <int>> copiaSop = sop;
 	list <list<int>> lista_recursao;
-	list <list<int>> isop_aux;
-	int flag_continuar_recursao_isop = 0;
-	int foi_usado = 0;
+	list <list<int>> isop;
+	
 	list <int> novo;
-	list <int> linha_isop;
-	int count;
-	int flag_se_combinou_com_alguem = 0;
-	for (auto i = nested_list.begin(); i != nested_list.end(); ++i) {
-		nested_list_aux.pop_front();
+	bool continuarRecursao = false;
+	for (auto i = sop.begin(); i != sop.end(); ++i) {
+		copiaSop.pop_front();	
+		bool deuMatch = false;
 		
-		for (auto j = nested_list_aux.begin(); j != nested_list_aux.end(); ++j) {
-			count = 0;
+		for (auto j = copiaSop.begin(); j != copiaSop.end(); ++j) {
 			list<int>& single_list_pointer = *i;
 			list<int>& single_list_pointer2 = *j;
 			list<int>::iterator single_list_itr = single_list_pointer.begin();
 			list<int>::iterator single_list_itr2 = single_list_pointer2.begin();
 			int distanceHamming = 0;
-
+			
 			while (single_list_itr != single_list_pointer.end() && single_list_itr2 != single_list_pointer2.end()) {
-
 				if (*single_list_itr != *single_list_itr2) {
 					distanceHamming++;
-					novo.push_back(DONTCARE);  
-
+					novo.push_back(DONTCARE);
 				}
 				else {
 					novo.push_back(*single_list_itr);
 				}
 				single_list_itr++;
 				single_list_itr2++;
+
 			}
 
+			
 			if (distanceHamming == 1) {
+				deuMatch = true;
 				lista_recursao.push_back(novo);
-				flag_continuar_recursao_isop = 1;
-				flag_se_combinou_com_alguem = 1;
+				continuarRecursao = true;	
 			}
-			
 			novo.clear();
-			
-		}
-		/*
-		if (flag_se_combinou_com_alguem == 0) {
-			list<int>::iterator single_list_itr3 = single_list_pointer.begin();
-			while (single_list_itr3 != single_list_pointer.end()) {
-				linha_isop.push_back(*single_list_itr3);
-				single_list_itr3++;
-			}
-			isop_preenchido_na_recursao_ne.push_back(linha_isop);
-			isop.push_back(linha_isop);
-			linha_isop.clear();
 
 		}
-		else {
-			flag_se_combinou_com_alguem = 0;
-		}*/
+
+		if (deuMatch == false) {
+			//primeiro checar se este valor já não se combinou com alguém anterior. Para isso, checar com a lista de recursão
+			for (auto it_lista = lista_recursao.begin(); it_lista != lista_recursao.end(); ++it_lista) {
+				list<int>& single_list_pointer3 = *it_lista;
+				list<int>::iterator single_list_itr3 = single_list_pointer3.begin();
+				int newDistanceHamming = 0;
+				list<int>& single_list_pointer4 = *i;
+				list<int>::iterator single_list_itr4 = single_list_pointer4.begin();
+				while (single_list_itr3 != single_list_pointer3.end()) {
+					if (*single_list_itr3 != *single_list_itr4) {
+						newDistanceHamming++;
+					}
+					single_list_itr3++;
+					single_list_itr4++;
+				}
+				
+				if (newDistanceHamming == 1) {
+					deuMatch = true;
+				}
+			}
+
+		}
+
+		if (deuMatch == false) {
+			list<int>& point = *i;
+			list<int>::iterator it = point.begin();
+			list <int> pertenceIsop;
+			while (it != point.end()) {
+				pertenceIsop.push_back(*it);
+				it++;
+			}
+			isop_incompleta.push_back(pertenceIsop);
+			pertenceIsop.clear();
+		}
 		
 	}
 
-
-	if (flag_continuar_recursao_isop == 1) {
+	if (continuarRecursao == true) {
+		isop_incompleta.sort();
+		isop_incompleta.unique();
 		lista_recursao.sort();
 		lista_recursao.unique();
-		isop_aux = quineMcCluskey(lista_recursao, isop_preenchido_na_recursao_ne);
-		printf("\n----ISOP AUXILIAR!------\n");
-		isop_aux.sort();
-		isop_aux.unique();
-		printNestedList(lista_recursao);
+		isop = quineMcCluskey(lista_recursao, isop_incompleta);
+	}
+	else {
+		isop_incompleta.sort();
+		isop_incompleta.unique();
+		isop.clear();
+		isop = isop_incompleta;
 	}
 
-	isop.sort();
-	isop.unique();
-	//isop.splice(isop.end(), isop_aux);
-	isop = isop_preenchido_na_recursao_ne;
 	return isop;
+
 }
 
 int numberOfUpdatedVariables(list <int> chowParameters) {
@@ -202,11 +230,9 @@ int numberOfUpdatedVariables(list <int> chowParameters) {
 	return n;
 }
 
-//vai ser preciso criar a isop da função negara, por isso é preciso criar uma função que negue
-
 /* PASSOS*/
 
-bool checkUnateness(list < list <int>> funcaoASerChecada) {
+bool isUnate(list < list <int>> funcaoASerChecada) {
 	bool isUnate = true;
 	list<int> countZeros;
 	list<int> countOnes;
@@ -389,7 +415,6 @@ list <list <int>> inequalitiesSystemWithUpdatedVariables(list <list <int>>greate
 	return pGreaters;
 	
 }
-
 
 list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < list <int>> lesser, int n) {
 	
@@ -718,29 +743,36 @@ int thresholdValueComputation(list <int> weightedSummation) {
 
 int main() {
 
-	//int numeroInputs;
-	//int numeroMinTermos;
-	//int* valoresMinTermos;
-	//int** tabela;
-	//bool isTF;
-
-	//list <list <int>> isop_preenchido_na_recursao;
-
-	//numeroInputs = solicitarNumeroInputs();
-	//numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
-	//valoresMinTermos = (int*)malloc(numeroMinTermos * sizeof(int));
-	//solicitarMinTermos(numeroMinTermos, valoresMinTermos);
+	int numeroInputs;
+	int numeroMinTermos;
+	int* valoresMinTermos;
+	int* valoresMinTermos_Neg;
+	int** tabela;
 
 
-	//tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
+	list <list <int>> isop;
 
-	//list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
+	numeroInputs = solicitarNumeroInputs();
+	numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
+
+	valoresMinTermos = (int*)malloc(numeroMinTermos * sizeof(int));
+	valoresMinTermos_Neg = (int*)malloc(numeroMinTermos * sizeof(int));
+
+	solicitarMinTermos(numeroMinTermos, valoresMinTermos);
+	negarFuncaoBooleana(valoresMinTermos, valoresMinTermos_Neg, numeroMinTermos);
+
+	tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
+	
+	list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
 	//printNestedList(sop);
 	//printf("\n----------------\n");
-	//list <list <int>> sop_neg = negarECriarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
+	//list <list <int>> sop_neg = criarFormatoSOP(tabela, valoresMinTermos_Neg, numeroInputs, numeroMinTermos);
 	//printNestedList(sop_neg);
-	//quineMcCluskey(sop, isop_preenchido_na_recursao);
-	//printNestedList(isop);
+	
+
+	isop = quineMcCluskey(sop, isop);
+	printf("\n----------------\n");
+	printNestedList(isop);
 
 
 	/* ESTE VAI SER O CÓDIGO FINAL!
@@ -1031,6 +1063,10 @@ int main() {
 	}
 	printSingleList(w);
 	*/
+	
+
+
+
 	return 0;
 
 
