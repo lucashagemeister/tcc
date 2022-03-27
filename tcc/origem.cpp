@@ -16,7 +16,30 @@ using namespace std;
 
 list <list <int>> isop;
 
-/* FUNÇÕES PARA RECEBER A FUNÇÃO BOOLEANA DE ENTRADA E CRIAR A TABELA-VERDADE */
+								/*FUNÇÕES AUXILIARES DE IMPRESSÃO DE LISTAS*/
+void printSingleList(list <int> single_list) {
+	cout << "[" << " ";
+	for (auto const& v : single_list)
+		cout << v << " ";
+	cout << "]\n";
+}
+
+void printNestedList(list<list<int> > nested_list) {
+	cout << "[\n";
+	list<list<int> >::iterator nested_list_itr;
+	for (nested_list_itr = nested_list.begin(); nested_list_itr != nested_list.end(); ++nested_list_itr) {
+		cout << "  [";
+		list<int>::iterator single_list_itr;
+		list<int>& single_list_pointer = *nested_list_itr;
+		for (single_list_itr = single_list_pointer.begin(); single_list_itr != single_list_pointer.end(); single_list_itr++) {
+			cout << " " << *single_list_itr << " ";
+		}
+		cout << "]\n";
+	}
+	cout << "]";
+}
+
+							/* FUNÇÕES PARA RECEBER A FUNÇÃO BOOLEANA DE ENTRADA E CRIAR A TABELA-VERDADE */
 int solicitarNumeroInputs() {
 	int numeroInputs;
 	cout << "Insira o numero de inputs da funcao booleana: ";
@@ -37,15 +60,64 @@ void solicitarMinTermos(int m, int* v) {
 
 }
 
-void negarFuncaoBooleana(int* funcao, int *funcao_neg, int m) {
-	for (int i = 0; i < m; i++) {
-		if (funcao[i] == 1) {
-			funcao_neg[i] = 0;
-		}
-		else if (funcao[i] == 0) {
-			funcao_neg[i] = 1;
+list<int> minTermoCorrespondente(list <int> linha) {
+	
+	int numeroDontCares = 0;
+	for (auto i = linha.begin(); i != linha.end(); ++i) {
+		if (*i == 9) {
+			numeroDontCares++;
 		}
 	}
+
+	int qte = 0;
+	for (auto i = linha.begin(); i != linha.end(); ++i) {
+		qte++;
+	}
+
+	int j = qte - 1;
+
+	list <int> listaMinTermo;
+	int nMinTermos = pow(2, numeroDontCares);
+	for (int i = 0; i < nMinTermos; i++) {
+		listaMinTermo.push_back(0);
+	}
+	int nDontCares = numeroDontCares;
+
+	for (auto i = linha.begin(); i != linha.end(); ++i) {
+		list <int>::iterator it = listaMinTermo.begin();
+		int flag = 0;
+		int v = 0;
+		if (*i == 9) {
+			nDontCares--;
+		}
+		
+		while (it != listaMinTermo.end()) {
+			int k = pow(2, j);
+			int l = pow(2, nDontCares);
+			if (*i != 9) {
+				*it += (*i) * k;
+			}
+			else {
+				*it += flag * k;
+				
+				v++;
+				if (v == l) {
+					v = 0;
+					switch (flag) {
+					case 0: flag = 1; break;
+					case 1: flag = 0; break;
+					}
+
+				}
+				
+			}
+			it++;
+		}
+		j--;
+	}
+	
+	printSingleList(listaMinTermo);
+	return listaMinTermo;
 }
 
 int** criarTabelaVerdade(int linhas, int colunas) {
@@ -68,7 +140,7 @@ int** criarTabelaVerdade(int linhas, int colunas) {
 	return tabelaVerdade;
 }
 
-/* TRANSFORMAR A FUNÇÃO BOOLEANA NO FORMATO ISOP - ALGORITMO DE QUINE-MCCLUSKEY*/
+							/* TRANSFORMAR A FUNÇÃO BOOLEANA NO FORMATO ISOP - ALGORITMO DE QUINE-MCCLUSKEY*/
 
 list<list<int>> criarFormatoSOP(int** tabelaVerdade, int* minTermos, int numeroInputs, int numeroMinTermos) {
 
@@ -87,48 +159,25 @@ list<list<int>> criarFormatoSOP(int** tabelaVerdade, int* minTermos, int numeroI
 	return sop;
 }
 
-list<list<int>> negarECriarFormatoSOP(int** tabelaVerdade, int* minTermos, int numeroInputs, int numeroMinTermos) {
-
-	list<list<int>> sop_neg;
-	list <int> line;
-	for (int i = 0; i < numeroMinTermos; i++) {
-		if (minTermos[i] == 0) {
-			for (int j = 0; j < numeroInputs; j++) {
-				line.push_back(tabelaVerdade[i][j]);
-			}
-			sop_neg.push_back(line);
-			line.clear();
+void negarFuncaoBooleana(int* funcao, int* funcao_neg, int m) {
+	for (int i = 0; i < m; i++) {
+		if (funcao[i] == 1) {
+			funcao_neg[i] = 0;
+		}
+		else if (funcao[i] == 0) {
+			funcao_neg[i] = 1;
 		}
 	}
-
-	return sop_neg;
-}
-
-void printSingleList(list <int> single_list) {
-	for (auto const& v : single_list)
-		 cout << v << "\n";
-}
-
-void printNestedList(list<list<int> > nested_list) {
-	cout << "[\n";
-	list<list<int> >::iterator nested_list_itr;
-	for (nested_list_itr = nested_list.begin(); nested_list_itr != nested_list.end(); ++nested_list_itr) {
-		cout << "  [";
-		list<int>::iterator single_list_itr;
-		list<int>& single_list_pointer = *nested_list_itr;
-		for (single_list_itr = single_list_pointer.begin(); single_list_itr != single_list_pointer.end(); single_list_itr++) {
-			cout << " " << *single_list_itr << " ";
-		}
-		cout << "]\n";
-	}
-	cout << "]";
 }
 
 list<list<int>> quineMcCluskey(list<list<int> > sop, list<list<int>>isop_incompleta) {
+
 	list <list <int>> copiaSop = sop;
 	list <list<int>> lista_recursao;
+	list < list <int>> primes;
 	list <list<int>> isop;
-	
+	list <list <int>> minTermsCovered;
+
 	list <int> novo;
 	bool continuarRecursao = false;
 	for (auto i = sop.begin(); i != sop.end(); ++i) {
@@ -207,18 +256,42 @@ list<list<int>> quineMcCluskey(list<list<int> > sop, list<list<int>>isop_incompl
 		isop_incompleta.unique();
 		lista_recursao.sort();
 		lista_recursao.unique();
-		isop = quineMcCluskey(lista_recursao, isop_incompleta);
+		primes = quineMcCluskey(lista_recursao, isop_incompleta);
 	}
 	else {
 		isop_incompleta.sort();
 		isop_incompleta.unique();
-		isop.clear();
-		isop = isop_incompleta;
+		primes.clear();
+		primes = isop_incompleta;
 	}
 
-	return isop;
+	printNestedList(primes);
+
+	//descobrir mintermos associados a cada primo
+	/*
+	for (auto i = primes.begin(); i != primes.end(); ++i) {
+		list <int> linhaMinTermos;
+		list<int>& point = *i;
+		list<int>::iterator it = point.begin();
+		int nDontCares = 0;
+		while (it != point.end()) {
+			if (*it == DONTCARE) {
+				nDontCares++;
+			}
+			it++;
+		}
+		for (int j = 0; j < pow(2, nDontCares); j++) {
+			linhaMinTermos.push_back(0);
+		}
+		minTermsCovered.push_back(linhaMinTermos);
+		linhaMinTermos.clear();
+	}*/
+
+	
+	return primes;
 
 }
+
 
 int numberOfUpdatedVariables(list <int> chowParameters) {
 	list <int> c = chowParameters;
@@ -230,8 +303,7 @@ int numberOfUpdatedVariables(list <int> chowParameters) {
 	return n;
 }
 
-/* PASSOS*/
-
+															/* PASSOS*/
 bool isUnate(list < list <int>> funcaoASerChecada) {
 	bool isUnate = true;
 	list<int> countZeros;
@@ -271,7 +343,17 @@ bool isUnate(list < list <int>> funcaoASerChecada) {
 		}
 	}
 
+	list<int>::iterator zeros_itr = countZeros.begin();
+	list<int>::iterator ones_itr = countOnes.begin();
 
+	while (zeros_itr != countZeros.end() && ones_itr != countOnes.end()) {
+		if (*zeros_itr != 0 && *ones_itr != 0) {
+			isUnate = false;
+		}
+		zeros_itr++;
+		ones_itr++;
+	}
+	
 	return isUnate;
 }
 
@@ -328,7 +410,41 @@ list<int> chowParametersComputation(list < list <int>> funcaoASerChecada) {
 	return chowParameters;
 }
 
-//Inequações
+list <int> vwoGeneration(list <int> chowParameters) {
+	list <int> vwo;
+	list <int>::iterator it1 = chowParameters.begin();
+	list <int>::iterator it2 = chowParameters.begin();
+	
+	while (it1 != chowParameters.end()) {
+		int nMaiores = 0;
+		list <int> jaUsados;
+		list <int>::iterator it2 = chowParameters.begin();
+
+		while (it2 != chowParameters.end()) {
+			bool jaUsado = (std::find(jaUsados.begin(), jaUsados.end(), *it2) != jaUsados.end());
+			if (*it1 < *it2 && jaUsado ==false) {
+				nMaiores += 1;
+				jaUsados.push_back(*it2);
+			}
+			it2++;
+		}
+		vwo.push_back(nMaiores);
+		it1++;
+	}
+
+	return vwo;
+}
+
+list <int> vwo_UpdatedVariables(list <int> vwo) { //ver direitinho se é só isso mesmo, se não vai dar ruim lá na frente.
+	list <int> x = vwo;
+	x.unique();
+	return x;
+}
+	//Inequações
+
+//list <list <int>> redundantWeightedSummationRemoval(list <int> sideOfInequality, list <int> vwo) {
+
+//}
 list < list <int>> inequalitiesSystemGeneration(list <list <int>>greater, list <list <int>> lesser, bool ladoDaInequacao ) {
 	list < list <int>> g;
 	list < list <int>> l;
@@ -359,15 +475,18 @@ list < list <int>> inequalitiesSystemGeneration(list <list <int>>greater, list <
 		}
 	}
 
-	//printNestedList(g);
-	//cout << endl;
-	//printNestedList(l);
+
 
 	if (ladoDaInequacao == 0)
 		return g;
 	else
 		return l;
 }
+
+//list <list <int>> redundantInequalityRemoval() {
+	
+	
+//}
 
 list <list <int>> inequalitiesSystemWithUpdatedVariables(list <list <int>>greater, list <int> chowParameters, int numberOfChows) {
 	list <list <int>> pGreaters;
@@ -522,40 +641,47 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 	}
 }
 
-
-bool isAgainstVariableOrdering() {
+bool isAgainstVariableOrdering(list <int> vwo, list <list <int>> greater, list <list <int>>lesser) {
+	
 	//não entendi o que é pra fazer
 	return false;
 }
 
-void weightAssignment(list <int> weights, list <int> vwo_updatedVariables, int nUpdatesVariables ) {
-	list <int>::iterator w_init = weights.begin();
+list <int> initialWeightAssignment(list <int> vwoUpdatedVariables) {
+	list <int> weights;
+	int sizeOfVwo = 0;
+	list <int>::iterator it = vwoUpdatedVariables.begin();
 	
-	int count = nUpdatesVariables;
-	if (*w_init == 0) { //atribuição inicial
-		while (w_init != weights.end()) {
-			list <int>::iterator v_init = vwo_updatedVariables.begin();
-			while (v_init != vwo_updatedVariables.end()) {
-				if (*v_init == count - 1) {
-					*w_init = *v_init + 1;   //tá errado, sempre dá 5 4 3 2 1, arrumar isso!
-				}
-				v_init++;
-			}
-			w_init++;
-			count--;
-		}
+	while (it != vwoUpdatedVariables.end()) {
+		sizeOfVwo++;
+		it++;
+		weights.push_back(0);
 	}
-	printSingleList(weights);
 
+	list <int>::iterator it1 = vwoUpdatedVariables.begin();
+	list <int>::iterator it2 = weights.begin();
 
+	while (it1 != vwoUpdatedVariables.end() && it2 != weights.end()) {
+		*it2 = sizeOfVwo - *it1;
+		it1++;
+		it2++;
+	}
+
+	return weights;
 }
 
-bool allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <int>> lesser, list <int> weights) {
+int calculateTheoreticallyMaximumWeight(int nVariables) {
+	int maximumWeight = 2 * pow(((float)nVariables + 1) / 4, ((float)nVariables + 1) / 2); //Teorema 9.3.2.1 Muroga
+	return maximumWeight;
+}
+
+list <int> allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <int>> lesser, list <int> weights) {
 	list <list <int>>::iterator gg = greater.begin();
 	list <list <int>>::iterator ll = lesser.begin();
-	bool inequalitiesAreSatisfied = true;
 
+	list <int> falseInequalities;
 	while (gg != greater.end() && ll != lesser.end()) {
+
 		list<int>& pG = *gg;
 		list<int>& pL = *ll;
 		list<int>::iterator g = pG.begin();
@@ -563,7 +689,7 @@ bool allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <int>> 
 		list<int>::iterator w = weights.begin();
 		int greaterSum = 0;
 		int lesserSum = 0;
-		while (g != pG.end() && l != pL.end() && w != weights.end()) { //dúvida: o tamanho de weights é o mesmo de greater e lesser?
+		while (g != pG.end() && l != pL.end() && w != weights.end()) {
 			greaterSum += (*g) * (*w);
 			lesserSum += (*l) * (*w);
 			w++;
@@ -571,16 +697,18 @@ bool allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <int>> 
 			l++;
 		}
 		if (lesserSum >= greaterSum) {
-			inequalitiesAreSatisfied = false;
+			falseInequalities.push_back(1);
+		}
+		else {
+			falseInequalities.push_back(0);
 		}
 		gg++;
 		ll++;
 	}
-
-	return inequalitiesAreSatisfied; //ainda não testei esta função para saber se está certa ou não.
+	return falseInequalities;
 }
 
-bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, int nVariables) {
+bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, int maximumWeight) {
 	int largestWeight = 0;
 	list<int>::iterator w = weights.begin();
 
@@ -590,84 +718,21 @@ bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, 
 		}
 		w++;
 	}
-	int maximumWeight = 2 * pow(((float)nVariables + 1) / 4, ((float)nVariables + 1) / 2); //Teorema 9.3.2.1 Muroga
 
 	if (largestWeight == maximumWeight) {
 		return true;
 	}
 	else {
-		return false; //ainda não testei esta função para saber se está certa ou não.
+		return false;
 	}
 }
 
-bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLessers,  list <bool> ineq_satisf, int nUpdVar) {
+bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLessers, list <int> ineq_satisf, int nUpdVar) {
 
 	list <list <int>>::iterator gg = pGreaters.begin();
 	list <list <int>>::iterator ll = pLessers.begin();
-	list <bool>::iterator it1 = ineq_satisf.begin();
+	list <int>::iterator it1 = ineq_satisf.begin();
 	bool thereAreCW = false;
-
-	list <int> g_cw;
-	list <int> l_cw;
-	list <int> d_cw;
-
-	for (int i = 0; i < nUpdVar; i++) {
-		g_cw.push_back(0);
-		l_cw.push_back(0);
-		d_cw.push_back(0);	
-	}
-	
-
-	while (gg != pGreaters.end() && ll != pLessers.end()) {
-		list<int>& pG = *gg;
-		list<int>& pL = *ll;
-		list<int>::iterator g = pG.begin();
-		list<int>::iterator l = pL.begin();
-		
-		list <int>::iterator itG = g_cw.begin();
-		list <int>::iterator itL = l_cw.begin();
-		list <int>::iterator itD = d_cw.begin();
-
-		while (g != pG.end() && l != pL.end()) {		
-			
-			if (*it1 ==  false) {
-				*itG += *g;
-				*itL += *l;
-				*itD = *itG - *itL;
-			}
-
-			itG++;
-			itL++;
-			itD++;
-
-			g++;
-			l++;
-		}
-		it1++;
-		gg++;
-		ll++;
-		
-
-	}
-	
-	list <int>::iterator check_D = d_cw.begin();
-
-	while (check_D != d_cw.end()) {
-		if (*check_D > 0) {
-			thereAreCW = true;
-		}
-		check_D++;
-	}
-	return thereAreCW;
-}
-
-
-list <int> increasingCW(list <list <int>> pGreaters, list <list <int>> pLessers, list <bool> ineq_satisf, int nUpdVar, list <int> weightsAssigned) {
-
-	list <list <int>>::iterator gg = pGreaters.begin();
-	list <list <int>>::iterator ll = pLessers.begin();
-	list <bool>::iterator it1 = ineq_satisf.begin();
-	list <int>::iterator it2 = weightsAssigned.begin();
 
 	list <int> g_cw;
 	list <int> l_cw;
@@ -714,34 +779,152 @@ list <int> increasingCW(list <list <int>> pGreaters, list <list <int>> pLessers,
 
 	list <int>::iterator check_D = d_cw.begin();
 
+	while (check_D != d_cw.end()) {
+		if (*check_D > 0) {
+			thereAreCW = true;
+		}
+		check_D++;
+	}
+	return thereAreCW;
+}
+
+list <int> increasingCW(list <list <int>> pGreaters, list <list <int>> pLessers, list <int> ineq_satisf, int nUpdVar, list <int> weights) {
+
+	list<int> weightsAssigned = weights;
+	list <list <int>>::iterator gg = pGreaters.begin();
+	list <list <int>>::iterator ll = pLessers.begin();
+	list <int>::iterator it1 = ineq_satisf.begin();
+	list <int>::iterator it2 = weightsAssigned.begin();
+
+	list <int> g_cw;
+	list <int> l_cw;
+	list <int> d_cw;
+
+	for (int i = 0; i < nUpdVar; i++) {
+		g_cw.push_back(0);
+		l_cw.push_back(0);
+		d_cw.push_back(0);
+	}
+
+
+	while (gg != pGreaters.end() && ll != pLessers.end()) {
+		list<int>& pG = *gg;
+		list<int>& pL = *ll;
+		list<int>::iterator g = pG.begin();
+		list<int>::iterator l = pL.begin();
+
+		list <int>::iterator itG = g_cw.begin();
+		list <int>::iterator itL = l_cw.begin();
+		list <int>::iterator itD = d_cw.begin();
+
+		while (g != pG.end() && l != pL.end()) {
+
+			if (*it1 == 0) {
+				*itG += *g;
+				*itL += *l;
+				*itD = *itG - *itL;
+			}
+
+			itG++;
+			itL++;
+			itD++;
+
+			g++;
+			l++;
+		}
+		it1++;
+		gg++;
+		ll++;
+
+
+	}
+
+	list <int>::iterator check_D = d_cw.begin();
+
 	while (check_D != d_cw.end() && it2 != weightsAssigned.end()) {
 		if (*check_D > 0) {
-			*it2+=1;
+			*it2 += 1;
 		}
 		check_D++;
 		it2++;
 	}
-	
+
 	return weightsAssigned;
 }
 
+list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables ) {
+	
+	list <int> falseInequalities = 	allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, weights);
 
-int thresholdValueComputation(list <int> weightedSummation) {
-	int high_value = 0;
-	list<int>::iterator sum = weightedSummation.begin();
-
-	while (sum != weightedSummation.end()) {
-		if (*sum < high_value) {
-			high_value = *sum;
+	bool existsFalseInequalities = (std::find(falseInequalities.begin(), falseInequalities.end(), 1) != falseInequalities.end());
+	if (existsFalseInequalities == true) {
+		bool largestIsMax = theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(weights, maximumWeight);
+		if (largestIsMax == true) {
+			//f is an underterminated function (ao menos nesta folha)
 		}
-		sum++;
+		else {
+			bool thereAreCw = existsCWToBeIncrased(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables);
+			if (thereAreCw == false) {
+				//f is a non-TF (ao menos nesta folha)
+			}
+			else {
+				list <int>::iterator it_Weights;
+				list <int> possiblesIncrementedWeights = increasingCW(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables, weights);
+				//a linha de cima está certa?
+			}
+		}
+	}
+	else {
+		return weights;
+	}
+	
+
+}
+
+int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLesser) { //irredundantLesser = pesos originais (w1,w2,...)
+	
+	list <int> weightSummation;
+	int threshold;
+	
+	list <list<int>>::iterator g= irredundantLesser.begin();
+
+	for (auto i = irredundantLesser.begin(); i != irredundantLesser.end(); ++i) {
+		int sum = 0;
+		list<int>& itr = *i;
+		list<int>::iterator g = itr.begin();
+		list <int>::iterator w = weights.begin();
+		while (g != itr.end() && w != weights.end()) {
+			sum += (*g) * (*w);
+			g++;
+			w++;
+		}
+		weightSummation.push_back(sum);
 	}
 
-	int threshold = high_value + 1;
-	return threshold; //ainda não testei esta função para saber se está certa ou não.
+	int high_value = 0;
+	list <int>::iterator wS = weightSummation.begin();
+
+	while (wS != weightSummation.end()) {
+		if (*wS > high_value) {
+			high_value = *wS;
+		}
+		wS++;
+	}
+
+	threshold = high_value + 1;
+
+	return threshold; 
 }
 
 int main() {
+	list <int> linha;
+	linha.push_back(1);
+	linha.push_back(9);
+	linha.push_back(0);
+	linha.push_back(9);
+	list <int> m = minTermoCorrespondente(linha);
+
+
 
 	int numeroInputs;
 	int numeroMinTermos;
@@ -749,9 +932,10 @@ int main() {
 	int* valoresMinTermos_Neg;
 	int** tabela;
 
-
 	list <list <int>> isop;
+	list <list <int>> isop_neg;
 
+											/*SETUP INICIAL: INPUT E GERAÇÃO DA ISOP*/
 	numeroInputs = solicitarNumeroInputs();
 	numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
 
@@ -764,310 +948,64 @@ int main() {
 	tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
 	
 	list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
-	//printNestedList(sop);
-	//printf("\n----------------\n");
-	//list <list <int>> sop_neg = criarFormatoSOP(tabela, valoresMinTermos_Neg, numeroInputs, numeroMinTermos);
-	//printNestedList(sop_neg);
-	
+	list <list <int>> sop_neg = criarFormatoSOP(tabela, valoresMinTermos_Neg, numeroInputs, numeroMinTermos);
+
 
 	isop = quineMcCluskey(sop, isop);
-	printf("\n----------------\n");
-	printNestedList(isop);
-
-
-	/* ESTE VAI SER O CÓDIGO FINAL!
-	int numeroInputs;
-	int numeroMinTermos;
-	int* valoresMinTermos;
-	int** tabela;
-	bool isTF;
-
-	list <list <int>> isop_preenchido_na_recursao;
-
-	numeroInputs = solicitarNumeroInputs();
-	numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
-	valoresMinTermos = (int*)malloc(numeroMinTermos * sizeof(int));
-	solicitarMinTermos(numeroMinTermos, valoresMinTermos);
-
-
-	tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
-
-	list <list <int>> isop = quineMcCluskey(sop, isop_preenchido_na_recursao);
+	//isop_neg = quineMcCluskey(sop_neg, isop_neg); //#Quine McCluskey está incompleta!
 	
-	if (checkUnateness(isop) == false){
-		isTF = false;
+	
+
+													/*FLUXOGRAMA DO ALGORITMO*/	
+	
+	if (isUnate(isop) == false) {
+		
+		return ISNOT_TF;
 	}
-	else{
-		chowParametersComputation(isop);
-		(...)
+	else {
+		list <int> chowParameters = chowParametersComputation(sop); //ATÉ AQUI ESTÁ TUDO OK (EXCETO QUINE MC-CLUSKEY)
+		int nVariables = numberOfUpdatedVariables(chowParameters);
+		vwoGeneration(chowParameters); //VWO ESTÁ SAINDO ERRADA EM ALGUNS CASOS
+
+		list < list <int>> greaterThanThreshold = isop;
+		list < list <int>> lesserThanThreshold = isop_neg;
+
+
+		/*
+		aqui, antes da geração do sistema de inequações, vai o redundantWeightedSummationRemoval dos chineses
+		*/
+
+		list <list <int>> greater_side = inequalitiesSystemGeneration(greaterThanThreshold, lesserThanThreshold, 0);
+		list <list <int>> lesser_side = inequalitiesSystemGeneration(greaterThanThreshold, lesserThanThreshold, 1);
+		
+
+		/*
+		aqui, depois  da geração do sistema de inequações, vai o redundantInequalityRemoval dos chineses
+		*/
+
+		//list <int> vwo;
+		//próximas listas são resultados do passo acima (redundantInequalityRemoval)
+		list <list <int>> greaterAfterRendudantInequalityRemoval;
+		list <list <int>> lesserAfterRedundantInequalityRemoval;
+
+		/*
+		e aqui vai o Against Variable Ordering, a partir do resultado do redundantInequalityRemoval
+		*/
+
+
+		list <list <int>> greater_side_upadatedVariables = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, nVariables);
+		list <list <int>> lesser_side_upadatedVariables = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, nVariables);
+
+		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_upadatedVariables, lesser_side_upadatedVariables, 1);
+		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_upadatedVariables, lesser_side_upadatedVariables, 2);
+
+		list <int> vwoUpdatedVariables; //como preenchê-la?
+		list <int> wa = initialWeightAssignment(vwoUpdatedVariables);
+		
+		//weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables )
+		
 	}
 	
-	*/
-
-
-	/*
-	list <list <int>> greater_side;
-	list <list <int>> lesser_side;
-
-	list <int> g1;
-	list <int> g2;
-	list <int> l1;
-	list <int> l2;
-	list <int> l3;
-
-	g1.push_back(1);
-	g1.push_back(0);
-	g1.push_back(1);
-	g1.push_back(1);
-
-	g2.push_back(1);
-	g2.push_back(1);
-	g2.push_back(0);
-	g2.push_back(0);
-
-	l1.push_back(0);
-	l1.push_back(1);
-	l1.push_back(1);
-	l1.push_back(1);
-
-	l2.push_back(1);
-	l2.push_back(0);
-	l2.push_back(0);
-	l2.push_back(1);
-
-	l3.push_back(1);
-	l3.push_back(0);
-	l3.push_back(1);
-	l3.push_back(0);
-
-	greater_side.push_back(g1);
-	greater_side.push_back(g2);
-	
-	lesser_side.push_back(l1);
-	lesser_side.push_back(l2);
-	lesser_side.push_back(l3);
-
-	list <int> chowParameters;
-	chowParameters.push_back(10);
-	chowParameters.push_back(6);
-	chowParameters.push_back(2);
-	chowParameters.push_back(2);
-	
-	list <int> vwo;
-	vwo.push_back(0);
-	vwo.push_back(1);
-	vwo.push_back(2);
-	vwo.push_back(2);
-
-	int n = numberOfUpdatedVariables(chowParameters);
-
-	list <list <int>> lado_esquerdo = inequalitiesSystemGeneration(greater_side, lesser_side, 0);
-
-	list <list <int>> lado_direito = inequalitiesSystemGeneration(greater_side, lesser_side, 1);
-
-
-	
-	list <list <int>> g_side;
-	list <list <int>> l_side;
-
-	g_side = inequalitiesSystemWithUpdatedVariables(lado_esquerdo, chowParameters, n);
-	l_side = inequalitiesSystemWithUpdatedVariables(lado_direito, chowParameters, n);
-
-
-	list <list <int>> g_simplificado;
-	list <list <int>> l_simplificado;
-	
-	g_simplificado = inequalitiesSimplification(g_side, l_side,1);
-	l_simplificado = inequalitiesSimplification(g_side, l_side,2);
-	*/
-
-
-
-	/*
-	list <int> vwo_variaveisAtualizadas;
-	vwo_variaveisAtualizadas.push_back(0);
-	vwo_variaveisAtualizadas.push_back(4);
-	vwo_variaveisAtualizadas.push_back(2);
-	vwo_variaveisAtualizadas.push_back(1);
-	vwo_variaveisAtualizadas.push_back(3);
-
-	list <int> weights_variaveisAtualizadas;
-	weights_variaveisAtualizadas.push_back(0);
-	weights_variaveisAtualizadas.push_back(0);
-	weights_variaveisAtualizadas.push_back(0);
-	weights_variaveisAtualizadas.push_back(0);
-	weights_variaveisAtualizadas.push_back(0);
-
-	weightAssignment(weights_variaveisAtualizadas, vwo_variaveisAtualizadas,5);
-	*/
-
-	/*
-	list <list <int>> pGreaters;
-	list <list <int>> pSmallers;
-	list <bool> ineq_satisf;
-	int n = 5;
-
-	ineq_satisf.push_back(false);
-	ineq_satisf.push_back(false);
-	ineq_satisf.push_back(false);
-	ineq_satisf.push_back(false);
-	ineq_satisf.push_back(false);
-	ineq_satisf.push_back(false);
-	ineq_satisf.push_back(true);
-	ineq_satisf.push_back(true);
-
-	list <int> g1;
-	list <int> g2;
-	list <int> g3;
-	list <int> g4;
-	list <int> g5;
-	list <int> g6;
-	list <int> g7;
-	list <int> g8;
-
-	list <int> l1;
-	list <int> l2;
-	list <int> l3;
-	list <int> l4;
-	list <int> l5;
-	list <int> l6;
-	list <int> l7;
-	list <int> l8;
-
-	g1.push_back(2);
-	g1.push_back(0);
-	g1.push_back(0);
-	g1.push_back(0);
-	g1.push_back(0);
-
-	g2.push_back(1);
-	g2.push_back(0);
-	g2.push_back(0);
-	g2.push_back(0);
-	g2.push_back(0);
-
-	g3.push_back(0);
-	g3.push_back(1);
-	g3.push_back(0);
-	g3.push_back(0);
-	g3.push_back(0);
-
-	g4.push_back(0);
-	g4.push_back(2);
-	g4.push_back(0);
-	g4.push_back(0);
-	g4.push_back(0);
-
-	g5.push_back(0);
-	g5.push_back(2);
-	g5.push_back(0);
-	g5.push_back(0);
-	g5.push_back(0);
-
-	g6.push_back(1);
-	g6.push_back(0);
-	g6.push_back(0);
-	g6.push_back(0);
-	g6.push_back(0);
-
-	g7.push_back(0);
-	g7.push_back(1);
-	g7.push_back(1);
-	g7.push_back(0);
-	g7.push_back(0);
-
-	g8.push_back(0);
-	g8.push_back(1);
-	g8.push_back(0);
-	g8.push_back(1);
-	g8.push_back(0);
-
-
-	l1.push_back(0);
-	l1.push_back(2);
-	l1.push_back(0);
-	l1.push_back(1);
-	l1.push_back(0);
-
-	l2.push_back(0);
-	l2.push_back(0);
-	l2.push_back(1);
-	l2.push_back(1);
-	l2.push_back(1);
-
-	l3.push_back(0);
-	l3.push_back(0);
-	l3.push_back(1);
-	l3.push_back(0);
-	l3.push_back(1);
-
-	l4.push_back(1);
-	l4.push_back(0);
-	l4.push_back(0);
-	l4.push_back(1);
-	l4.push_back(1);
-
-	l5.push_back(1);
-	l5.push_back(0);
-	l5.push_back(1);
-	l5.push_back(0);
-	l5.push_back(0);
-
-	l6.push_back(0);
-	l6.push_back(1);
-	l6.push_back(0);
-	l6.push_back(0);
-	l6.push_back(1);
-
-	l7.push_back(1);
-	l7.push_back(0);
-	l7.push_back(0);
-	l7.push_back(0);
-	l7.push_back(1);
-
-	l8.push_back(1);
-	l8.push_back(0);
-	l8.push_back(0);
-	l8.push_back(0);
-	l8.push_back(0);
-
-	pGreaters.push_back(g1);
-	pGreaters.push_back(g2);
-	pGreaters.push_back(g3);
-	pGreaters.push_back(g4);
-	pGreaters.push_back(g5);
-	pGreaters.push_back(g6);
-	pGreaters.push_back(g7);
-	pGreaters.push_back(g8);
-
-	pSmallers.push_back(l1);
-	pSmallers.push_back(l2);
-	pSmallers.push_back(l3);
-	pSmallers.push_back(l4);
-	pSmallers.push_back(l5);
-	pSmallers.push_back(l6);
-	pSmallers.push_back(l7);
-	pSmallers.push_back(l8);
-
-	list <int> w;
-	w.push_back(5);
-	w.push_back(4);
-	w.push_back(3);
-	w.push_back(2);
-	w.push_back(1);
-	*/
-
-	/*
-	while (existsCWToBeIncrased(pGreaters, pSmallers, ineq_satisf, n) == true) {
-		w =increasingCW(pGreaters, pSmallers, ineq_satisf, n,w);
-	}
-	printSingleList(w);
-	*/
-	
-
-
-
 	return 0;
-
 
 }
