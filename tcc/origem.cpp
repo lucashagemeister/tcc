@@ -36,7 +36,7 @@ void printNestedList(list<list<int> > nested_list) {
 		}
 		cout << "]\n";
 	}
-	cout << "]";
+	cout << "]\n";
 }
 
 							/* FUNÇÕES PARA RECEBER A FUNÇÃO BOOLEANA DE ENTRADA E CRIAR A TABELA-VERDADE */
@@ -115,8 +115,7 @@ list<int> minTermoCorrespondente(list <int> linha) {
 		}
 		j--;
 	}
-	
-	printSingleList(listaMinTermo);
+
 	return listaMinTermo;
 }
 
@@ -265,31 +264,157 @@ list<list<int>> quineMcCluskey(list<list<int> > sop, list<list<int>>isop_incompl
 		primes = isop_incompleta;
 	}
 
-	printNestedList(primes);
+	
 
 	//descobrir mintermos associados a cada primo
-	/*
 	for (auto i = primes.begin(); i != primes.end(); ++i) {
-		list <int> linhaMinTermos;
-		list<int>& point = *i;
-		list<int>::iterator it = point.begin();
-		int nDontCares = 0;
-		while (it != point.end()) {
-			if (*it == DONTCARE) {
-				nDontCares++;
-			}
-			it++;
-		}
-		for (int j = 0; j < pow(2, nDontCares); j++) {
-			linhaMinTermos.push_back(0);
-		}
-		minTermsCovered.push_back(linhaMinTermos);
-		linhaMinTermos.clear();
-	}*/
+		list <int> minTermos = minTermoCorrespondente(*i);
+		minTermsCovered.push_back(minTermos);
+	}
 
+
+	//tabela de cobertura para descobrir quem são os primos essenciais
 	
-	return primes;
+	list <list <int>>::iterator it_primes = primes.begin();
+	list <list <int>>::iterator it_mTC = minTermsCovered.begin();
+	list < list <int>> mTC_copy = minTermsCovered;
 
+	list <int> allMinTermsCovered;
+	list <list <int>> essentialPrimes;
+	list <int> mTCinOneLine;
+
+	while (it_mTC != minTermsCovered.end()) {
+		list<int>& point = *it_mTC;
+		list<int>::iterator it1 = point.begin();
+		while (it1 != point.end()) {
+			mTCinOneLine.push_back(*it1);
+			it1++;
+		}
+		it_mTC++;
+	}
+
+	list <list <int>>::iterator it_mT = minTermsCovered.begin();
+	
+
+	while (it_primes != primes.end()) {
+		list<int>& pointer = *it_mT;
+		list<int>::iterator it1 = pointer.begin();
+
+		
+		while (it1 != pointer.end()) {
+			int count = 0;
+			list<int>::iterator single_line = mTCinOneLine.begin();
+			while (single_line != mTCinOneLine.end()) {
+				if (*it1 == *single_line) {
+					count++;
+				}
+				single_line++;
+			}
+			bool jaEssencial = (std::find(essentialPrimes.begin(), essentialPrimes.end(), *it_primes) != essentialPrimes.end());
+			if (count == 1 && jaEssencial == false) {
+				essentialPrimes.push_back(*it_primes);
+				list<int>& pointer2 = *it_mT;
+				list<int>::iterator it2 = pointer2.begin();
+				while (it2 != pointer2.end()) {
+					allMinTermsCovered.push_back(*it2);
+					it2++;
+				}
+				
+			}
+			it1++;
+		}
+
+		
+
+		it_mT++;
+		it_primes++;
+	}
+
+	//se houver algum bug, é nesta parte final (abaixo) onde eu criei um algoritmo para escolher os implicantes não essenciais que entram na ISOP
+	list <list <int>> notSelected;
+	
+	list <list <int>>::iterator x = minTermsCovered.begin();
+
+	for (auto i = primes.begin(); i != primes.end(); ++i) {
+		list<int>& pointer = *x;
+		list<int>::iterator it1 = pointer.begin();
+
+		while (it1 != pointer.end()) {
+			for (auto j = allMinTermsCovered.begin(); j != allMinTermsCovered.end(); ++j) {
+				bool isEssential = (std::find(essentialPrimes.begin(), essentialPrimes.end(), *i) != essentialPrimes.end());
+				bool isNotSelected = (std::find(notSelected.begin(), notSelected.end(), *i) != notSelected.end());
+				if (*it1 == *j && isEssential == false && isNotSelected == false) {
+					notSelected.push_back(*i);
+				}
+			}
+			it1++;
+		}
+		x++;
+	}
+
+	list <list <int>> primeImplicants;
+
+	list <list <int>>::iterator y = minTermsCovered.begin();
+	for (auto i = primes.begin(); i != primes.end(); ++i) {
+		list<int>& pointer = *y;
+		list<int>::iterator it1 = pointer.begin();
+
+		
+		bool isEssential = (std::find(essentialPrimes.begin(), essentialPrimes.end(), *i) != essentialPrimes.end());
+		bool isNotSelected = (std::find(notSelected.begin(), notSelected.end(), *i) != notSelected.end());
+		if (isEssential == false && isNotSelected == false) {
+			bool isImplicant = true;
+			while (it1 != pointer.end()) {
+				bool mTCovered = (std::find(allMinTermsCovered.begin(), allMinTermsCovered.end(), *it1) != allMinTermsCovered.end());
+				if (mTCovered == true) {
+					isImplicant = false;
+				}
+				it1++;
+			}
+			if (isImplicant == true) {
+				primeImplicants.push_back(*i);
+				list<int>& pointer2 = *y;
+				list<int>::iterator it2 = pointer2.begin();
+				while (it2 != pointer2.end()) {
+					allMinTermsCovered.push_back(*it2);
+					it2++;
+				}
+			}
+		}
+		y++;
+	}
+
+	list <list <int>>::iterator y2 = minTermsCovered.begin();
+	for (auto i = primes.begin(); i != primes.end(); ++i) {
+		bool isEssential = (std::find(essentialPrimes.begin(), essentialPrimes.end(), *i) != essentialPrimes.end());
+		bool isNotSelected = (std::find(notSelected.begin(), notSelected.end(), *i) != notSelected.end());
+		if (isEssential == false && isNotSelected == false) {
+			list<int>& pointer = *y2;
+			list<int>::iterator it = pointer.begin();
+			while (it != pointer.end()) {
+				bool isCovered = (std::find(allMinTermsCovered.begin(), allMinTermsCovered.end(), *it) != allMinTermsCovered.end());
+				if (isCovered == false) {
+					primeImplicants.push_back(*i);
+					list<int>& pointer2 = *y2;
+					list<int>::iterator it2 = pointer2.begin();
+					while (it2 != pointer2.end()) {
+						allMinTermsCovered.push_back(*it2);
+						it2++;
+					}
+				}
+				it++;
+			}
+		}
+		y2++;
+	}
+
+	for (auto i = essentialPrimes.begin(); i != essentialPrimes.end(); ++i) {
+		primeImplicants.push_back(*i);
+	}
+
+	printNestedList(primeImplicants);
+	return primeImplicants;
+	
 }
 
 
@@ -917,13 +1042,6 @@ int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLe
 }
 
 int main() {
-	list <int> linha;
-	linha.push_back(1);
-	linha.push_back(9);
-	linha.push_back(0);
-	linha.push_back(9);
-	list <int> m = minTermoCorrespondente(linha);
-
 
 
 	int numeroInputs;
@@ -952,7 +1070,7 @@ int main() {
 
 
 	isop = quineMcCluskey(sop, isop);
-	//isop_neg = quineMcCluskey(sop_neg, isop_neg); //#Quine McCluskey está incompleta!
+	//isop_neg = quineMcCluskey(sop_neg, isop_neg); 
 	
 	
 
