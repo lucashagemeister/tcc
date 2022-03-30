@@ -1010,24 +1010,28 @@ list <int> increasingCW(list <list <int>> pGreaters, list <list <int>> pLessers,
 }
 
 list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables ) {
-	
+	list <int> undeterminedFunction;
+	undeterminedFunction.push_back(9999);
+
+	list <int> notTF;
+	notTF.push_back(-9999);
 	list <int> falseInequalities = 	allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, weights);
 
 	bool existsFalseInequalities = (std::find(falseInequalities.begin(), falseInequalities.end(), 1) != falseInequalities.end());
 	if (existsFalseInequalities == true) {
 		bool largestIsMax = theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(weights, maximumWeight);
 		if (largestIsMax == true) {
-			//f is an underterminated function (ao menos nesta folha)
+			return undeterminedFunction;
 		}
 		else {
 			bool thereAreCw = existsCWToBeIncrased(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables);
 			if (thereAreCw == false) {
-				//f is a non-TF (ao menos nesta folha)
+				return notTF;
 			}
 			else {
 				list <int>::iterator it_Weights;
 				list <int> possiblesIncrementedWeights = increasingCW(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables, weights);
-				//a linha de cima está certa?
+				weightAssignment(possiblesIncrementedWeights, irredundantGreater, irredundantLesser, maximumWeight, nUpdatedVariables);
 			}
 		}
 	}
@@ -1131,7 +1135,6 @@ int main() {
 		aqui, depois  da geração do sistema de inequações, vai o redundantInequalityRemoval dos chineses
 		*/
 
-		//list <int> vwo;
 		//próximas listas são resultados do passo acima (redundantInequalityRemoval)
 		list <list <int>> greaterAfterRendudantInequalityRemoval;
 		list <list <int>> lesserAfterRedundantInequalityRemoval;
@@ -1147,13 +1150,12 @@ int main() {
 		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 1);
 		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 2);
 
-		printNestedList(greater_simplificado);
-		printNestedList(lesser_simplificado);
-
-		list <int> vwoUpdatedVariables; //como preenchê-la?
-		list <int> wa = initialWeightAssignment(vwoUpdatedVariables);
+		list <int> vwoUpdatedVariables = vwo_UpdatedVariables(vwo);
+		list <int> initial_wa = initialWeightAssignment(vwoUpdatedVariables);
+		int maximumWeight = calculateTheoreticallyMaximumWeight(numeroInputs);
+		int nUpdatedVariables = numberOfUpdatedVariables(chowParameters);
+		list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
 		
-		//weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables )9
 	}
 	
 	return 0;
