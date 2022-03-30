@@ -10,9 +10,9 @@
 using namespace std;
 
 #define DONTCARE  9
-#define ISNOT_TF 0
-#define IS_TF 1
-#define IS_UNDEFINED 2
+//#define ISNOT_TF 0
+//#define IS_TF 1
+//#define IS_UNDEFINED 2
 
 list <list <int>> isop;
 
@@ -167,6 +167,25 @@ void negarFuncaoBooleana(int* funcao, int* funcao_neg, int m) {
 			funcao_neg[i] = 1;
 		}
 	}
+
+}
+
+list <list <int>> converterFuncaoNegadasNosPesosCorrespondentes(list <list <int>> funcaoNegada) {
+	for (auto i = funcaoNegada.begin(); i != funcaoNegada.end(); ++i) {
+		list<int>& point = *i;
+		list<int>::iterator j = point.begin();
+
+		while (j != point.end()) {
+			if (*j == 9) {
+				*j = 1;
+			}
+			else if (*j == 0) {
+				*j = 9;
+			}
+			j++;
+		}
+	}
+	return funcaoNegada;
 }
 
 list<list<int>> quineMcCluskey(list<list<int> > sop, list<list<int>>isop_incompleta) {
@@ -412,11 +431,24 @@ list<list<int>> quineMcCluskey(list<list<int> > sop, list<list<int>>isop_incompl
 		primeImplicants.push_back(*i);
 	}
 
-	printNestedList(primeImplicants);
 	return primeImplicants;
 	
 }
 
+list <list <int>> converterVariaveisEmPesos(list <list <int>> funcao) {
+	for (auto i = funcao.begin(); i != funcao.end(); ++i) {
+		list<int>& point = *i;
+		list<int>::iterator j = point.begin();
+
+		while (j != point.end()) {
+			if (*j == 9) {
+				*j = 0;
+			}
+			j++;
+		}
+	}
+	return funcao;
+}
 
 int numberOfUpdatedVariables(list <int> chowParameters) {
 	list <int> c = chowParameters;
@@ -1043,7 +1075,6 @@ int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLe
 
 int main() {
 
-
 	int numeroInputs;
 	int numeroMinTermos;
 	int* valoresMinTermos;
@@ -1070,23 +1101,21 @@ int main() {
 
 
 	isop = quineMcCluskey(sop, isop);
-	//isop_neg = quineMcCluskey(sop_neg, isop_neg); 
-	
-	
+	isop_neg = quineMcCluskey(sop_neg, isop_neg); 
+	isop_neg = converterFuncaoNegadasNosPesosCorrespondentes(isop_neg);
 
 													/*FLUXOGRAMA DO ALGORITMO*/	
 	
 	if (isUnate(isop) == false) {
-		
-		return ISNOT_TF;
+		cout << "Não eh Threshold" << endl;
 	}
 	else {
-		list <int> chowParameters = chowParametersComputation(sop); //ATÉ AQUI ESTÁ TUDO OK (EXCETO QUINE MC-CLUSKEY)
+		list <int> chowParameters = chowParametersComputation(sop); 
 		int nVariables = numberOfUpdatedVariables(chowParameters);
-		vwoGeneration(chowParameters); //VWO ESTÁ SAINDO ERRADA EM ALGUNS CASOS
+		list <int> vwo = vwoGeneration(chowParameters); 
 
-		list < list <int>> greaterThanThreshold = isop;
-		list < list <int>> lesserThanThreshold = isop_neg;
+		list < list <int>> greaterThanThreshold = converterVariaveisEmPesos(isop);
+		list < list <int>> lesserThanThreshold = converterVariaveisEmPesos(isop_neg);
 
 
 		/*
@@ -1096,6 +1125,7 @@ int main() {
 		list <list <int>> greater_side = inequalitiesSystemGeneration(greaterThanThreshold, lesserThanThreshold, 0);
 		list <list <int>> lesser_side = inequalitiesSystemGeneration(greaterThanThreshold, lesserThanThreshold, 1);
 		
+
 
 		/*
 		aqui, depois  da geração do sistema de inequações, vai o redundantInequalityRemoval dos chineses
@@ -1111,17 +1141,19 @@ int main() {
 		*/
 
 
-		list <list <int>> greater_side_upadatedVariables = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, nVariables);
-		list <list <int>> lesser_side_upadatedVariables = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, nVariables);
+		list <list <int>> greater_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, nVariables);
+		list <list <int>> lesser_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, nVariables);
 
-		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_upadatedVariables, lesser_side_upadatedVariables, 1);
-		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_upadatedVariables, lesser_side_upadatedVariables, 2);
+		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 1);
+		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 2);
+
+		printNestedList(greater_simplificado);
+		printNestedList(lesser_simplificado);
 
 		list <int> vwoUpdatedVariables; //como preenchê-la?
 		list <int> wa = initialWeightAssignment(vwoUpdatedVariables);
 		
-		//weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables )
-		
+		//weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables )9
 	}
 	
 	return 0;
