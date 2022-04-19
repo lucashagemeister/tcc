@@ -64,6 +64,26 @@ int somaPonderadaVWO(list <int> lista, list <int> vwo) {
 	return sum;
 }
 
+list <int> pesosPonderados(list <int> lista, list <int> vwo) {
+	list <int> pP;
+	list <int>::iterator it_lista = lista.begin();
+	list <int>::iterator it_vwo = vwo.begin();
+
+	while (it_lista != lista.end() && it_vwo != vwo.end()) {
+		int x = (*it_lista) * (*it_vwo);
+		if (*it_lista != 0) {
+			pP.push_back(x);
+		}
+		
+
+		
+
+		it_lista++;
+		it_vwo++;
+	}
+
+	return pP;
+}
 
 							/* FUNÇÕES PARA RECEBER A FUNÇÃO BOOLEANA DE ENTRADA E CRIAR A TABELA-VERDADE */
 int solicitarNumeroInputs() {
@@ -88,7 +108,7 @@ void solicitarMinTermos(int m, int* v) {
 
 	int x;
 	ifstream inFile;
-	inFile.open("teste2.txt");
+	inFile.open("funcaoS.txt");
 
 	if (!inFile) {
 		cout << "Unable to open file";
@@ -644,40 +664,93 @@ list <int> vwo_UpdatedVariables(list <int> vwo) { //ver direitinho se é só iss
 }
 	//Inequações
 
-list <list <int>> redundantWeightedSummationRemoval(list <list <int>> original, list <int> vwo) {
-	list <list <int>> copia = original;
-
-	list < list <int>> redundant;
-	list < list <int>> notRedundant;
-	list <list <int>>::iterator it_original = original.begin();
+list <list <int>> redundantWeightedSummationRemoval(list <list <int>> original, list <int> vwo, int n) {
 	
-	while (it_original != original.end()) {
-		copia.pop_front();
-		list <list <int>>::iterator it_copia = copia.begin();
-		while (it_copia != copia.end()) {
+	list < list <int>> notRedundant;
 
-			if (numeroUns(*it_copia) == numeroUns(*it_original)) {
-				if (somaPonderadaVWO(*it_original,vwo) <= somaPonderadaVWO(*it_copia, vwo)) {
-					redundant.push_back(*it_original);
+	if (n == 0) {
+
+		for (auto i = 1; i <= vwo.size(); i++) {
+
+			int max = 0;
+			for (auto j = original.begin(); j != original.end(); ++j) {
+				if (numeroUns(*j) == i) {
+					if (somaPonderadaVWO(*j, vwo) > max) {
+						max = somaPonderadaVWO(*j, vwo);
+					}
 				}
 			}
 
-			it_copia++;
+			list <list <int>> candidatos_notRedundant;
+			list <list <int>> pPonderados;
+			for (auto j = original.begin(); j != original.end(); ++j) {
+				if (numeroUns(*j) == i) {
+					if (somaPonderadaVWO(*j, vwo) == max) {
+
+						list <int> x = pesosPonderados(*j, vwo);
+
+						bool isThere = (std::find(pPonderados.begin(), pPonderados.end(), x) != pPonderados.end());
+
+						if (isThere == false) {
+							pPonderados.push_back(x);
+							candidatos_notRedundant.push_back(*j);
+						}
+					}
+				}
+			}
+
+			for (auto j = candidatos_notRedundant.begin(); j != candidatos_notRedundant.end(); ++j) {
+				notRedundant.push_back(*j);
+			}
+			candidatos_notRedundant.clear();
+			pPonderados.clear();
+
 		}
-		it_original++;
+	}
+	
+
+	if (n == 1) {
+
+		for (auto i = 1; i <= vwo.size(); i++) {
+
+			int min = 999;
+			for (auto j = original.begin(); j != original.end(); ++j) {
+				if (numeroUns(*j) == i) {
+					if (somaPonderadaVWO(*j, vwo) < min) {
+						min = somaPonderadaVWO(*j, vwo);
+					}
+				}
+			}
+
+			list <list <int>> candidatos_notRedundant;
+			list <list <int>> pPonderados;
+			for (auto j = original.begin(); j != original.end(); ++j) {
+				if (numeroUns(*j) == i) {
+					if (somaPonderadaVWO(*j, vwo) == min) {
+
+						list <int> x = pesosPonderados(*j, vwo);
+
+						bool isThere = (std::find(pPonderados.begin(), pPonderados.end(), x) != pPonderados.end());
+
+						if (isThere == false) {
+							pPonderados.push_back(x);
+							candidatos_notRedundant.push_back(*j);
+						}
+					}
+				}
+			}
+
+			for (auto j = candidatos_notRedundant.begin(); j != candidatos_notRedundant.end(); ++j) {
+				notRedundant.push_back(*j);
+			}
+			candidatos_notRedundant.clear();
+			pPonderados.clear();
+
+		}
 	}
 
-	redundant.unique();
-
-	for (auto i = original.begin(); i != original.end(); ++i) {
-		bool isRedundant = (std::find(redundant.begin(), redundant.end(), *i) != redundant.end());
-		if (isRedundant == false) {
-			notRedundant.push_back(*i);
-		}
-	}
 
 	return notRedundant;
-
 }
 
 list < list <int>> inequalitiesSystemGeneration(list <list <int>>greater, list <list <int>> lesser, bool ladoDaInequacao ) {
@@ -727,7 +800,10 @@ list <list <int>> redundantInequalityRemoval(list <list <int>>greater, list <lis
 
 	while (it_greater != greater.end() && it_lesser != lesser.end()) {
 		
+		/*
 		if (numeroUns(*it_greater) > numeroUns(*it_lesser)) {
+
+			
 			list<int>& single_list_pointer = *it_greater;
 			list<int>& single_list_pointer2 = *it_lesser;
 			list<int>::iterator it1 = single_list_pointer.begin();
@@ -753,9 +829,11 @@ list <list <int>> redundantInequalityRemoval(list <list <int>>greater, list <lis
 					notRedundant.push_back(*it_lesser);
 				}
 			}
+			
 		}
 		
 		else if (numeroUns(*it_greater) == numeroUns(*it_lesser)) {
+			
 			list<int>& single_list_pointer = *it_greater;
 			list<int>& single_list_pointer2 = *it_lesser;
 			list<int>::iterator it1 = single_list_pointer.begin();
@@ -788,7 +866,41 @@ list <list <int>> redundantInequalityRemoval(list <list <int>>greater, list <lis
 					notRedundant.push_back(*it_lesser);
 				}
 			}
+			
+		}
+		*/
+		if (numeroUns(*it_greater) >= numeroUns(*it_lesser)) {
+			bool redundante = true;
+			list<int>& single_list_pointer = *it_greater;
+			list<int>& single_list_pointer2 = *it_lesser;
+			list<int>::iterator it1 = single_list_pointer.begin();
+			list<int>::iterator it2 = single_list_pointer2.begin();
 
+			int qte = 0;
+			while (it1 != single_list_pointer.end() && it2 != single_list_pointer2.end()) {
+				if (*it1 == 0 && *it2 == 1) {
+					qte--;
+				}
+				else if (*it1 == 1 && *it2 == 0) {
+					qte++;
+				}
+
+				if (qte < 0) {
+					redundante = false;
+					break;
+				}
+				it1++;
+				it2++;
+			}
+
+			if (redundante == false) {
+				if (sideOfInequality == 0) {
+					notRedundant.push_back(*it_greater);
+				}
+				else if (sideOfInequality == 1) {
+					notRedundant.push_back(*it_lesser);
+				}
+			}
 		}
 		else {
 			if (sideOfInequality == 0) {
@@ -960,7 +1072,7 @@ list <list <int>> inequalitiesSystemWithUpdatedVariables(list <list <int>>greate
 	
 }
 
-list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < list <int>> lesser, int n) {
+list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < list <int>> lesser, list <int> vwo, int n) {
 	
 	//parte 1: Elimination of variables that appear in both sides of inequalities 
 	list <list <int>>::iterator gg = greater.begin();
@@ -983,8 +1095,8 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 					*l = 0;
 				}
 				else if (*g < *l) {
+					*l -= *g;
 					*g = 0;
-					*l -= *l;
 				}
 			}
 			g++;
@@ -994,6 +1106,7 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 		ll++;
 	}
 
+	
 	//parte 2: elimination of inequalities with no elements on the lesser side 
 	list <list <int>>::iterator gg2 = greater.begin();
 	list <list <int>>::iterator ll2 = lesser.begin();
@@ -1023,7 +1136,39 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 		}
 	}
 
-	//parte 3: Elimination of inequalities with a single element on the lesser side
+	
+	//parte 3: Elimination of inequalities with a single element on the lesser side (alguns, que são redundantes no VWO)
+	list <list <int>>::iterator gg3 = greater.begin();
+	list <list <int>>::iterator ll3 = lesser.begin();
+
+
+
+	while (gg3 != greater.end() && ll3 != lesser.end()) {
+		list<int>& pG3 = *gg3;
+		list<int>& pL3 = *ll3;
+		list<int>::iterator g3 = pG3.begin();
+		list<int>::iterator l3 = pL3.begin();
+		list<int>::iterator it_vwo = vwo.begin();
+		
+
+		if (numeroUns(*ll3) == 1 && numeroUns(*gg3)==1) {
+			//int x = somaPonderadaVWO(*ll3,vwo);
+			//int y = somaPonderadaVWO(*gg3, vwo);
+			greater.erase(gg3++);
+			lesser.erase(ll3++);
+
+		}
+		else {
+			gg3++;
+			ll3++;
+		}
+
+
+		
+	}
+
+
+	/*
 	list <list <int>>::iterator gg3 = greater.begin();
 	list <list <int>>::iterator ll3 = lesser.begin();
 	while (gg3 != greater.end() && ll3 != lesser.end()) {
@@ -1057,6 +1202,9 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 			ll3++;
 		}
 	}
+	*/
+
+
 
 	if (n == 1) {
 		return greater;
@@ -1403,34 +1551,35 @@ int main() {
 		list < list <int>> greaterThanThreshold = converterVariaveisEmPesos(isop);
 		list < list <int>> lesserThanThreshold = converterVariaveisEmPesos(isop_neg);
 
-
-		list <list <int>> greaterAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(greaterThanThreshold, vwo);
-		list <list <int>> lesserAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(lesserThanThreshold, vwo);
-
-
+		list <list <int>> greaterAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(greaterThanThreshold, vwo,0);
+		list <list <int>> lesserAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(lesserThanThreshold, vwo,1);
+			
 		list <list <int>> greater_side = inequalitiesSystemGeneration(greaterAfterRedundantSummationRemoval, lesserAfterRedundantSummationRemoval, 0);
 		list <list <int>> lesser_side = inequalitiesSystemGeneration(greaterAfterRedundantSummationRemoval, lesserAfterRedundantSummationRemoval, 1);
 
 
-		list <list <int>> greaterAfterRendudantInequalityRemoval = redundantInequalityRemoval (greater_side,lesser_side,0,vwo);
-		list <list <int>> lesserAfterRedundantInequalityRemoval = redundantInequalityRemoval (greater_side,lesser_side,1,vwo);
-
-		cout << "******************" << endl;
-		printNestedList(greaterAfterRendudantInequalityRemoval);
-		printNestedList(lesserAfterRedundantInequalityRemoval);
-		cout << "******************" << endl;
-
-
-
-		list <list <int>> greater_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, nVariables,vwo);
+		list <list <int>> greater_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, nVariables, vwo);
 		list <list <int>> lesser_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, nVariables,vwo);
 
+		list <int> vwo_updatedVariables = vwo;
+		vwo_updatedVariables.unique();
+
+		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, vwo_updatedVariables, 1);
+		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, vwo_updatedVariables, 2);
+
+		/*até o inequalitiesSimplification está tudo funcionando, talvez não precise do redundantInequalityRemoval, pois pode ser que já esteja imbutido */
 
 
-		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 1);
-		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 2);
+		//list <list <int>> greaterAfterRendudantInequalityRemoval = redundantInequalityRemoval (greater_side,lesser_side,0,vwo);
+		//list <list <int>> lesserAfterRedundantInequalityRemoval = redundantInequalityRemoval (greater_side,lesser_side,1,vwo);
 
 
+		//list <list <int>> greater_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(greaterAfterRendudantInequalityRemoval, chowParameters, nVariables,vwo);
+		//list <list <int>> lesser_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(lesserAfterRedundantInequalityRemoval, chowParameters, nVariables,vwo);
+
+
+		//list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 1);
+		//list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 2);
 
 
 
@@ -1438,7 +1587,7 @@ int main() {
 		list <int> initial_wa = initialWeightAssignment(vwoUpdatedVariables);
 		int maximumWeight = calculateTheoreticallyMaximumWeight(numeroInputs);
 		int nUpdatedVariables = numberOfUpdatedVariables(chowParameters);
-		list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
+		//list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
 		
 	}
 	
