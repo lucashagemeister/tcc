@@ -15,7 +15,8 @@ using namespace std;
 //#define IS_UNDEFINED 2
 
 list <list <int>> isop;
-
+list <int> finalWeightAssignment;
+list <list <int>> finalCandidatesWeightAssignment; 
 								/*FUNÇÕES AUXILIARES DE IMPRESSÃO DE LISTAS*/
 void printSingleList(list <int> single_list) {
 	cout << "[" << " ";
@@ -1379,7 +1380,7 @@ list <int> increasingCW(list <int> weights,  int count) {
 	
 
 list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables ) {
-				
+	
 	list <int> falseInequalities = allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, weights);
 	list <int> weightAssigned;
 	bool existsFalseInequalities = (std::find(falseInequalities.begin(), falseInequalities.end(), 1) != falseInequalities.end());
@@ -1387,22 +1388,31 @@ list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGrea
 	if (existsFalseInequalities == true) {
 		bool largestIsMax = theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(weights, maximumWeight);
 		if (largestIsMax == true) {
-			//cout << "INDETERMINADO!" << endl;
+			finalWeightAssignment.clear();
+			finalWeightAssignment.push_back(999); //undefined
 		}
 		else {
 			list <int> possiblesCWs = calculateCWs(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables);
 			bool thereAreCw = existsCWToBeIncrased(possiblesCWs);
 			if (thereAreCw == false) {
-				//cout << "NAO EH TF" << endl;
+				finalWeightAssignment.clear();
+				finalWeightAssignment.push_back(9999); //notTF
 			}
 			else {
 				int count = 0;
 				for (auto i = possiblesCWs.begin(); i != possiblesCWs.end(); ++i) {
 					if (*i > 0) {
 						list <int> newWeights = increasingCW(weights, count);
-						printSingleList(newWeights);
+						finalWeightAssignment.clear();
+						finalWeightAssignment = newWeights;
 						weightAssigned = weightAssignment(newWeights, irredundantGreater, irredundantLesser, maximumWeight, nUpdatedVariables);
-						
+
+						list <int> falseInequalities2 = allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, newWeights);
+						bool existsFalseInequalities2 = (std::find(falseInequalities2.begin(), falseInequalities2.end(), 1) != falseInequalities2.end());
+
+						if (existsFalseInequalities2 == false) {
+							finalCandidatesWeightAssignment.push_back(newWeights);
+						}
 					}
 					count++;
 				}
@@ -1412,14 +1422,16 @@ list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGrea
 		}
 	}
 	else {
-
+		return weightAssigned;
 	}
 
+
 	return weightAssigned;
+	
 }
 
 int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLesser) { //irredundantLesser = pesos originais (w1,w2,...)
-	
+
 	list <int> weightSummation;
 	int threshold;
 	
@@ -1452,6 +1464,8 @@ int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLe
 
 	return threshold; 
 }
+
+
 
 int main() {
 
@@ -1536,6 +1550,35 @@ int main() {
 		int nUpdatedVariables = numberOfUpdatedVariables(chowParameters);
 		list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
 		
+		finalCandidatesWeightAssignment.sort();
+		finalCandidatesWeightAssignment.unique();
+		finalWeightAssignment.clear();
+		list <list <int>>::iterator it = finalCandidatesWeightAssignment.begin();
+		finalWeightAssignment = *it;
+
+
+
+
+
+		list <int> original_weightAssignment;
+
+		int i = 0;
+		for (auto j = finalWeightAssignment.begin(); j != finalWeightAssignment.end(); ++j) { //está correto, mas meio escroto, é bom dar uma melhorada
+			list <int>::iterator it = vwo.begin();
+			while (it != vwo.end()) {
+				if (*it == i) {
+					original_weightAssignment.push_back(*j);
+				}
+				it++;
+			}
+			i++;
+		}
+
+		cout << "Os pesos sao: " << endl;
+		printSingleList(original_weightAssignment);
+		cout << " O valor de threshold eh: " << endl;
+		int T = thresholdValueComputation(original_weightAssignment, lesserAfterRedundantSummationRemoval);
+		cout << T << endl;
 		
 	}
 	
