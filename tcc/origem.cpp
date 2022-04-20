@@ -108,7 +108,7 @@ void solicitarMinTermos(int m, int* v) {
 
 	int x;
 	ifstream inFile;
-	inFile.open("funcaoS.txt");
+	inFile.open("funcaoP.txt");
 
 	if (!inFile) {
 		cout << "Unable to open file";
@@ -1214,12 +1214,6 @@ list <list <int>> inequalitiesSimplification(list < list <int>> greater, list < 
 	}
 }
 
-bool isAgainstVariableOrdering(list <int> vwo, list <list <int>> greater, list <list <int>>lesser) {
-	
-	//não entendi o que é pra fazer
-	return false;
-}
-
 list <int> initialWeightAssignment(list <int> vwoUpdatedVariables) {
 	list <int> weights;
 	int sizeOfVwo = 0;
@@ -1249,6 +1243,7 @@ int calculateTheoreticallyMaximumWeight(int nVariables) {
 }
 
 list <int> allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <int>> lesser, list <int> weights) {
+	
 	list <list <int>>::iterator gg = greater.begin();
 	list <list <int>>::iterator ll = lesser.begin();
 
@@ -1278,6 +1273,7 @@ list <int> allTheInequalitiesAreSatisfied(list <list <int>>greater, list <list <
 		gg++;
 		ll++;
 	}
+	
 	return falseInequalities;
 }
 
@@ -1300,12 +1296,11 @@ bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, 
 	}
 }
 
-bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLessers, list <int> ineq_satisf, int nUpdVar) {
 
+list <int> calculateCWs(list <list <int>> pGreaters, list <list <int>> pLessers, list <int> ineq_satisf, int nUpdVar) {
 	list <list <int>>::iterator gg = pGreaters.begin();
 	list <list <int>>::iterator ll = pLessers.begin();
 	list <int>::iterator it1 = ineq_satisf.begin();
-	bool thereAreCW = false;
 
 	list <int> g_cw;
 	list <int> l_cw;
@@ -1330,7 +1325,7 @@ bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLesser
 
 		while (g != pG.end() && l != pL.end()) {
 
-			if (*it1 == false) {
+			if (*it1 == 1) { //lá no falseInequalities, 1 significa que a função é falsa
 				*itG += *g;
 				*itL += *l;
 				*itD = *itG - *itL;
@@ -1349,6 +1344,11 @@ bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLesser
 
 
 	}
+
+	return d_cw;
+}
+bool existsCWToBeIncrased(list <int> d_cw) {
+	bool thereAreCW = false;
 
 	list <int>::iterator check_D = d_cw.begin();
 
@@ -1358,113 +1358,64 @@ bool existsCWToBeIncrased(list <list <int>> pGreaters, list <list <int>> pLesser
 		}
 		check_D++;
 	}
+
 	return thereAreCW;
 }
 
-list <int> increasingCW(list <list <int>> pGreaters, list <list <int>> pLessers, list <int> ineq_satisf, int nUpdVar, list <int> weights) {
-
-	list<int> weightsAssigned = weights;
-	list <list <int>>::iterator gg = pGreaters.begin();
-	list <list <int>>::iterator ll = pLessers.begin();
-	list <int>::iterator it1 = ineq_satisf.begin();
-	list <int>::iterator it2 = weightsAssigned.begin();
-
-	list <int> g_cw;
-	list <int> l_cw;
-	list <int> d_cw;
-
-	for (int i = 0; i < nUpdVar; i++) {
-		g_cw.push_back(0);
-		l_cw.push_back(0);
-		d_cw.push_back(0);
-	}
-
-	while (gg != pGreaters.end() && ll != pLessers.end()) {
-		list<int>& pG = *gg;
-		list<int>& pL = *ll;
-		list<int>::iterator g = pG.begin();
-		list<int>::iterator l = pL.begin();
-
-		list <int>::iterator itG = g_cw.begin();
-		list <int>::iterator itL = l_cw.begin();
-		list <int>::iterator itD = d_cw.begin();
-		
-		
-		while (g != pG.end() && l != pL.end()) {
-
-			if (*it1 == 0) {
-				*itG += *g;
-				*itL += *l;
-				*itD = *itG - *itL;
-			}
-
-			itG++;
-			itL++;
-			itD++;
-
-			g++;
-			l++;
-		}
-		it1++;
-		gg++;
-		ll++;
-	}
-
+list <int> increasingCW(list <int> weights,  int count) {
 	
-	list <int>::iterator check_D = d_cw.begin();
-	printSingleList(d_cw);
-	while (check_D != d_cw.end() && it2 != weightsAssigned.end()) {
-		if (*check_D > 0) {
-			*it2 += 1;
+	list <int> copy_weights = weights;
+	int x = 0;
+	
+	for (auto it = copy_weights.begin(); it != copy_weights.end(); ++it) {
+		if (x == count) {
+			*it += 1;
 		}
-		
-		check_D++;
-		it2++;
+		x++;
 	}
 
-	return weightsAssigned;
+	return copy_weights;
 }
+	
 
 list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables ) {
 				
-	printSingleList(weights);
-	list <int> undeterminedFunction;
-	undeterminedFunction.push_back(9999);
+	list <int> falseInequalities = allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, weights);
+	list <int> weightAssigned;
+	bool existsFalseInequalities = (std::find(falseInequalities.begin(), falseInequalities.end(), 1) != falseInequalities.end());
 
-	list <int> notTF;
-	notTF.push_back(-9999);
-	list <int> falseInequalities = 	allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, weights);
-
-	
-	bool existsFalseInequalities = (std::find(falseInequalities.begin(), falseInequalities.end(), 0) != falseInequalities.end()); //é para comparar com 0 ou 1?
-	
 	if (existsFalseInequalities == true) {
-		//cout << "chegamos aqui?" << endl;
 		bool largestIsMax = theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(weights, maximumWeight);
 		if (largestIsMax == true) {
-			cout << "cheguei no indeterminado!" << endl;
-			return undeterminedFunction;
+			//cout << "INDETERMINADO!" << endl;
 		}
 		else {
-			bool thereAreCw = existsCWToBeIncrased(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables);
+			list <int> possiblesCWs = calculateCWs(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables);
+			bool thereAreCw = existsCWToBeIncrased(possiblesCWs);
 			if (thereAreCw == false) {
-				cout << "cheguei no notTF!" << endl;
-				return notTF;
-
+				//cout << "NAO EH TF" << endl;
 			}
 			else {
-				list <int>::iterator it_Weights;
-					list <int> possiblesIncrementedWeights = increasingCW(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables, weights);
-					weightAssignment(possiblesIncrementedWeights, irredundantGreater, irredundantLesser, maximumWeight, nUpdatedVariables);
-					cout << "cheguei aqui!" << endl;				
+				int count = 0;
+				for (auto i = possiblesCWs.begin(); i != possiblesCWs.end(); ++i) {
+					if (*i > 0) {
+						list <int> newWeights = increasingCW(weights, count);
+						printSingleList(newWeights);
+						weightAssigned = weightAssignment(newWeights, irredundantGreater, irredundantLesser, maximumWeight, nUpdatedVariables);
+						
+					}
+					count++;
+				}
+				
 			}
+
 		}
 	}
 	else {
-		return weights;
-	}
-	
 
+	}
+
+	return weightAssigned;
 }
 
 int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLesser) { //irredundantLesser = pesos originais (w1,w2,...)
@@ -1503,7 +1454,6 @@ int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLe
 }
 
 int main() {
-
 
 	int numeroInputs;
 	int numeroMinTermos;
@@ -1567,8 +1517,6 @@ int main() {
 		list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, vwo_updatedVariables, 1);
 		list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, vwo_updatedVariables, 2);
 
-		/*até o inequalitiesSimplification está tudo funcionando, talvez não precise do redundantInequalityRemoval, pois pode ser que já esteja imbutido */
-
 
 		//list <list <int>> greaterAfterRendudantInequalityRemoval = redundantInequalityRemoval (greater_side,lesser_side,0,vwo);
 		//list <list <int>> lesserAfterRedundantInequalityRemoval = redundantInequalityRemoval (greater_side,lesser_side,1,vwo);
@@ -1582,15 +1530,14 @@ int main() {
 		//list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 2);
 
 
-
 		list <int> vwoUpdatedVariables = vwo_UpdatedVariables(vwo);
 		list <int> initial_wa = initialWeightAssignment(vwoUpdatedVariables);
 		int maximumWeight = calculateTheoreticallyMaximumWeight(numeroInputs);
 		int nUpdatedVariables = numberOfUpdatedVariables(chowParameters);
-		//list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
+		list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
+		
 		
 	}
 	
 	return 0;
-
 }
