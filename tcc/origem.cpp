@@ -6,17 +6,24 @@
 #include <vector>
 #include <iterator>
 #include <fstream>
+#include <stdint.h>
+#include <chrono>
 
 using namespace std;
 
 #define DONTCARE  9
-//#define ISNOT_TF 0
+#define ISNOT_TF 999
+#define IS_UNDEFINED 9999
 //#define IS_TF 1
-//#define IS_UNDEFINED 2
 
+string arquivoMinTermos("funcaoP.txt");
+
+int undefined_counter;
+int notTF_counter;
 list <list <int>> isop;
 list <int> finalWeightAssignment;
 list <list <int>> finalCandidatesWeightAssignment; 
+
 								/*FUNÇÕES AUXILIARES DE IMPRESSÃO DE LISTAS*/
 void printSingleList(list <int> single_list) {
 	cout << "[" << " ";
@@ -94,22 +101,17 @@ int solicitarNumeroInputs() {
 	return numeroInputs;
 }
 
-int calcularNumeroMinTermos(int inputs) {
-	return pow(2, inputs);
-}
+int calcularNumeroMinTermos(list <int> valoresMinTermos) {
+	//return pow(2, inputs);
+	int quantidade = 0;
 
-void solicitarMinTermos(int m, int* v) {
-	/*
-	cout << "Ok! Entao esta funcao booleana tem " << m << " mintermos/linhas. Informe os valores de cada mintermo" << endl;
-	for (int i = 0; i < m; i++) {
-		cout << "Qual o valor do mintermo m" << i << "? ";
-		cin >> v[i];
+	for (auto i = valoresMinTermos.begin(); i != valoresMinTermos.end(); ++i) {
+		quantidade++;
 	}
-	*/
-
+	/*
 	int x;
 	ifstream inFile;
-	inFile.open("funcaoP.txt");
+	inFile.open(arquivoMinTermos);
 
 	if (!inFile) {
 		cout << "Unable to open file";
@@ -118,12 +120,46 @@ void solicitarMinTermos(int m, int* v) {
 
 	int i = 0;
 	while (inFile >> x) {
-		v[i] = x;
 		i++;
 	}
 
 	inFile.close();
 
+	return i;
+	*/
+	return quantidade;
+}
+
+int calcularNumeroVariaveis(int qteMinTermos) {
+
+	int nVariaveis = log2(qteMinTermos);
+
+	return nVariaveis;
+}
+
+list <int> armazenarMinTermos(list <int> conjuntoMinTermos) {
+
+	list <int> minTermos = conjuntoMinTermos;
+
+	/*
+	int x;
+	ifstream inFile;
+	inFile.open(arquivoMinTermos);
+
+	if (!inFile) {
+		cout << "Unable to open file";
+		exit(1); // terminate with error
+	}
+
+	int i = 0;
+	while (inFile >> x) {
+		minTermos.push_back(x);
+		i++;
+	}
+
+	inFile.close();
+	*/
+	return minTermos;
 }
 
 list<int> minTermoCorrespondente(list <int> linha) {
@@ -185,7 +221,7 @@ list<int> minTermoCorrespondente(list <int> linha) {
 	return listaMinTermo;
 }
 
-int** criarTabelaVerdade(int linhas, int colunas) {
+list <list <int>> criarTabelaVerdade(int linhas, int colunas) {
 	int** tabelaVerdade;
 
 	tabelaVerdade = (int**)malloc(linhas * sizeof(int*));
@@ -202,38 +238,71 @@ int** criarTabelaVerdade(int linhas, int colunas) {
 		}
 	}
 
-	return tabelaVerdade;
+	list <list <int>> tabelaVerdade_Lista;
+	for (int i = 0; i < linhas; i++) {
+		list <int> linha;
+		for (int j = 0; j < colunas; j++) {
+			linha.push_back(tabelaVerdade[i][j]);
+		}
+		tabelaVerdade_Lista.push_back(linha);
+		linha.clear();
+	}
+
+	return tabelaVerdade_Lista;
+}
+
+list <list <int>> gerarFuncoesBooleanas(int inputs) {
+	list <int> funcaoBooleana;
+	list <list <int>> conjuntoFuncoesBooleanas;
+
+	uint_least64_t linhas; //uint_least64_t serve para fazer os cálculos de potência, se não quebra o operando pow
+	uint_least64_t colunas;
+
+	colunas = pow(2, inputs);
+	linhas = pow(2, colunas);
+	for (int i = 0; i < linhas; i++) {
+		for (int j = 0; j < colunas; j++) {
+			int x = pow(2, j);
+			int y = (i & x) ? 1 : 0;
+			funcaoBooleana.push_back(y);
+		}
+		funcaoBooleana.reverse();
+		conjuntoFuncoesBooleanas.push_back(funcaoBooleana);
+		funcaoBooleana.clear();
+	}
+
+
+	return conjuntoFuncoesBooleanas;
 }
 
 							/* TRANSFORMAR A FUNÇÃO BOOLEANA NO FORMATO ISOP - ALGORITMO DE QUINE-MCCLUSKEY*/
 
-list<list<int>> criarFormatoSOP(int** tabelaVerdade, int* minTermos, int numeroInputs, int numeroMinTermos) {
-
+list<list<int>> criarFormatoSOP(list <list <int>> tabelaVerdade, list <int> minTermos) {
 	list<list<int>> sop;
-	list <int> line;
-	for (int i = 0; i < numeroMinTermos; i++) {
-		if (minTermos[i] == 1) {
-			for (int j = 0; j < numeroInputs; j++) {
-				line.push_back(tabelaVerdade[i][j]);
-			}
-			sop.push_back(line);
-			line.clear();
+	list<list <int>>::iterator it_tabelaVerdade = tabelaVerdade.begin();
+
+	for (auto i = minTermos.begin(); i != minTermos.end(); i++) {
+		if (*i == 1) {
+			sop.push_back(*it_tabelaVerdade);
 		}
+		it_tabelaVerdade++;
 	}
 
 	return sop;
 }
 
-void negarFuncaoBooleana(int* funcao, int* funcao_neg, int m) {
-	for (int i = 0; i < m; i++) {
-		if (funcao[i] == 1) {
-			funcao_neg[i] = 0;
+list <int> negarFuncaoBooleana(list <int> valores_MinTermos) {
+	list <int> neg;
+	for (auto i = valores_MinTermos.begin(); i != valores_MinTermos.end(); ++i) {
+		if (*i == 1) {
+			neg.push_back(0);
 		}
-		else if (funcao[i] == 0) {
-			funcao_neg[i] = 1;
+		else if (*i == 0) {
+			neg.push_back(1);
 		}
 	}
 
+	return neg;
 }
 
 list <list <int>> converterFuncaoNegadasNosPesosCorrespondentes(list <list <int>> funcaoNegada) {
@@ -542,7 +611,7 @@ bool isUnate(list < list <int>> funcaoASerChecada) {
 			countOnes.push_back(0);
 			single_list_itrX++;
 		}
-		break; //que bagaceiro!
+		break; 
 	}
 
 
@@ -595,7 +664,7 @@ list<int> chowParametersComputation(list < list <int>> funcaoASerChecada) {
 			chowParameters.push_back(0);
 			single_list_itrX++;
 		}
-		break; //que bagaceiro!
+		break; 
 	}
 
 
@@ -658,7 +727,7 @@ list <int> vwoGeneration(list <int> chowParameters) {
 	return vwo;
 }
 
-list <int> vwo_UpdatedVariables(list <int> vwo) { //ver direitinho se é só isso mesmo, se não vai dar ruim lá na frente.
+list <int> vwo_UpdatedVariables(list <int> vwo) { 
 	list <int> x = vwo;
 	x.unique();
 	return x;
@@ -1297,7 +1366,6 @@ bool theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(list <int> weights, 
 	}
 }
 
-
 list <int> calculateCWs(list <list <int>> pGreaters, list <list <int>> pLessers, list <int> ineq_satisf, int nUpdVar) {
 	list <list <int>>::iterator gg = pGreaters.begin();
 	list <list <int>>::iterator ll = pLessers.begin();
@@ -1348,6 +1416,7 @@ list <int> calculateCWs(list <list <int>> pGreaters, list <list <int>> pLessers,
 
 	return d_cw;
 }
+
 bool existsCWToBeIncrased(list <int> d_cw) {
 	bool thereAreCW = false;
 
@@ -1378,25 +1447,26 @@ list <int> increasingCW(list <int> weights,  int count) {
 	return copy_weights;
 }
 	
-
 list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGreater, list <list<int>> irredundantLesser, int maximumWeight, int nUpdatedVariables ) {
-	
+
 	list <int> falseInequalities = allTheInequalitiesAreSatisfied(irredundantGreater, irredundantLesser, weights);
 	list <int> weightAssigned;
 	bool existsFalseInequalities = (std::find(falseInequalities.begin(), falseInequalities.end(), 1) != falseInequalities.end());
 
+	if (undefined_counter == 100 || notTF_counter == 100) {
+		return weightAssigned;
+	}
+	
 	if (existsFalseInequalities == true) {
 		bool largestIsMax = theLargestWeightIsEqualToTheTheoreticallyMaximumWeight(weights, maximumWeight);
 		if (largestIsMax == true) {
-			finalWeightAssignment.clear();
-			finalWeightAssignment.push_back(999); //undefined
+			undefined_counter++;
 		}
 		else {
 			list <int> possiblesCWs = calculateCWs(irredundantGreater, irredundantLesser, falseInequalities, nUpdatedVariables);
 			bool thereAreCw = existsCWToBeIncrased(possiblesCWs);
 			if (thereAreCw == false) {
-				finalWeightAssignment.clear();
-				finalWeightAssignment.push_back(9999); //notTF
+				notTF_counter++;
 			}
 			else {
 				int count = 0;
@@ -1421,7 +1491,10 @@ list <int> weightAssignment(list <int> weights, list <list<int>> irredundantGrea
 
 		}
 	}
-	else {
+	else {		
+		if (weightAssigned.empty() == true) {
+			weightAssigned = weights;
+		}
 		return weightAssigned;
 	}
 
@@ -1465,65 +1538,69 @@ int thresholdValueComputation(list <int> weights, list <list<int>> irredundantLe
 	return threshold; 
 }
 
+list <int> flow(list <int> valoresMinTermos) {
+	undefined_counter = 0;
+	notTF_counter = 0;
+	
+	list <int> tlg;
 
-
-int main() {
+	if (numeroUns(valoresMinTermos) == 0) {
+		return tlg;
+	}
 
 	int numeroInputs;
 	int numeroMinTermos;
-	int* valoresMinTermos;
-	int* valoresMinTermos_Neg;
-	int** tabela;
-
+	
 	list <list <int>> isop;
 	list <list <int>> isop_neg;
 
-											/*SETUP INICIAL: INPUT E GERAÇÃO DA ISOP*/
-	numeroInputs = solicitarNumeroInputs();
-	numeroMinTermos = calcularNumeroMinTermos(numeroInputs);
+	/*SETUP INICIAL: INPUT E GERAÇÃO DA ISOP*/
 
-	valoresMinTermos = (int*)malloc(numeroMinTermos * sizeof(int));
-	valoresMinTermos_Neg = (int*)malloc(numeroMinTermos * sizeof(int));
+	numeroMinTermos = calcularNumeroMinTermos(valoresMinTermos);
+	numeroInputs = calcularNumeroVariaveis(numeroMinTermos);
 
-	solicitarMinTermos(numeroMinTermos, valoresMinTermos);
-	negarFuncaoBooleana(valoresMinTermos, valoresMinTermos_Neg, numeroMinTermos);
+	//list <int> valoresMinTermos = armazenarMinTermos();
 
-	tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
+	list <int> valoresMinTermos_Neg = negarFuncaoBooleana(valoresMinTermos);
+
+	list <list <int>> tabela = criarTabelaVerdade(numeroMinTermos, numeroInputs);
+
+
+	list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos);
+	list <list <int>> sop_neg = criarFormatoSOP(tabela, valoresMinTermos_Neg);
+
 	
-	list <list <int>> sop = criarFormatoSOP(tabela, valoresMinTermos, numeroInputs, numeroMinTermos);
-	list <list <int>> sop_neg = criarFormatoSOP(tabela, valoresMinTermos_Neg, numeroInputs, numeroMinTermos);
-
-
 	isop = quineMcCluskey(sop, isop);
-	isop_neg = quineMcCluskey(sop_neg, isop_neg); 
+	
+	isop_neg = quineMcCluskey(sop_neg, isop_neg);
 	isop_neg = converterFuncaoNegadasNosPesosCorrespondentes(isop_neg);
-
 	
-
-
-
-													/*FLUXOGRAMA DO ALGORITMO*/	
 	
+	/*FLUXOGRAMA DO ALGORITMO*/
+
 	if (isUnate(isop) == false) {
-		cout << "Não eh Threshold" << endl;
+		tlg.push_back(ISNOT_TF);
 	}
 	else {
-		list <int> chowParameters = chowParametersComputation(sop); 
+		
+		list <int> chowParameters = chowParametersComputation(sop);
+		
 		int nVariables = numberOfUpdatedVariables(chowParameters);
-		list <int> vwo = vwoGeneration(chowParameters); 
-
+		list <int> vwo = vwoGeneration(chowParameters);
+		
 		list < list <int>> greaterThanThreshold = converterVariaveisEmPesos(isop);
 		list < list <int>> lesserThanThreshold = converterVariaveisEmPesos(isop_neg);
 
-		list <list <int>> greaterAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(greaterThanThreshold, vwo,0);
-		list <list <int>> lesserAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(lesserThanThreshold, vwo,1);
-			
+
+		list <list <int>> greaterAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(greaterThanThreshold, vwo, 0);
+		list <list <int>> lesserAfterRedundantSummationRemoval = redundantWeightedSummationRemoval(lesserThanThreshold, vwo, 1);
+
 		list <list <int>> greater_side = inequalitiesSystemGeneration(greaterAfterRedundantSummationRemoval, lesserAfterRedundantSummationRemoval, 0);
 		list <list <int>> lesser_side = inequalitiesSystemGeneration(greaterAfterRedundantSummationRemoval, lesserAfterRedundantSummationRemoval, 1);
 
 
 		list <list <int>> greater_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(greater_side, chowParameters, nVariables, vwo);
-		list <list <int>> lesser_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, nVariables,vwo);
+		list <list <int>> lesser_side_updatedVariables = inequalitiesSystemWithUpdatedVariables(lesser_side, chowParameters, nVariables, vwo);
 
 		list <int> vwo_updatedVariables = vwo;
 		vwo_updatedVariables.unique();
@@ -1543,44 +1620,93 @@ int main() {
 		//list <list <int>> greater_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 1);
 		//list <list <int>> lesser_simplificado = inequalitiesSimplification(greater_side_updatedVariables, lesser_side_updatedVariables, 2);
 
-
+		
 		list <int> vwoUpdatedVariables = vwo_UpdatedVariables(vwo);
+		
 		list <int> initial_wa = initialWeightAssignment(vwoUpdatedVariables);
+		
 		int maximumWeight = calculateTheoreticallyMaximumWeight(numeroInputs);
 		int nUpdatedVariables = numberOfUpdatedVariables(chowParameters);
+		
+		
 		list <int> weights = weightAssignment(initial_wa, greater_simplificado, lesser_simplificado, maximumWeight, nUpdatedVariables);
 		
-		finalCandidatesWeightAssignment.sort();
-		finalCandidatesWeightAssignment.unique();
-		finalWeightAssignment.clear();
-		list <list <int>>::iterator it = finalCandidatesWeightAssignment.begin();
-		finalWeightAssignment = *it;
+		//finalCandidatesWeightAssignment.sort();
+		//finalCandidatesWeightAssignment.unique();
+		//finalWeightAssignment.clear();
+		
+		//list <list <int>>::iterator it = finalCandidatesWeightAssignment.begin();
+		
+		//finalWeightAssignment = *it; 
 
-
-
-
-
-		list <int> original_weightAssignment;
-
-		int i = 0;
-		for (auto j = finalWeightAssignment.begin(); j != finalWeightAssignment.end(); ++j) { //está correto, mas meio escroto, é bom dar uma melhorada
-			list <int>::iterator it = vwo.begin();
-			while (it != vwo.end()) {
-				if (*it == i) {
-					original_weightAssignment.push_back(*j);
+		if (undefined_counter == 100) {
+			tlg.push_back(IS_UNDEFINED);
+		}
+		else if (notTF_counter == 100) {
+			tlg.push_back(ISNOT_TF);
+		}
+		else {
+			int i = 0;
+			for (auto j = weights.begin(); j != weights.end();++j/*auto j = finalWeightAssignment.begin(); j != finalWeightAssignment.end(); ++j*/) {
+				list <int>::iterator it = vwo.begin();
+				while (it != vwo.end()) {
+					if (*it == i) {
+						tlg.push_back(*j);
+					}
+					it++;
 				}
-				it++;
+				i++;
 			}
-			i++;
+			int T = thresholdValueComputation(tlg, lesserAfterRedundantSummationRemoval);
+			tlg.push_back(T);
 		}
 
-		cout << "Os pesos sao: " << endl;
-		printSingleList(original_weightAssignment);
-		cout << " O valor de threshold eh: " << endl;
-		int T = thresholdValueComputation(original_weightAssignment, lesserAfterRedundantSummationRemoval);
-		cout << T << endl;
 		
+
 	}
+
+	return tlg;
+
+}
+
+int main() {
+	
+	int nTF = 0;
+
+	list <list <int>> f;
+	list <int> thresholdGate;
+	list <list <int>> thresholdGatesCollection;
+	auto inicio = std::chrono::high_resolution_clock::now();
+	f = gerarFuncoesBooleanas(5);
+
+	for (auto j = f.begin(); j != f.end(); ++j) {
+		list <int> valoresMinTermos = armazenarMinTermos(*j);		
+		thresholdGate = flow(valoresMinTermos);
+		
+		bool isNotTF = (std::find(thresholdGate.begin(), thresholdGate.end(), ISNOT_TF) != thresholdGate.end());
+		bool isUndefined = (std::find(thresholdGate.begin(), thresholdGate.end(), IS_UNDEFINED) != thresholdGate.end());
+		if (isNotTF == true) {
+			//cout << "This boolean function is not a Threshold Function!" << endl;
+			//cout << endl;
+		}
+		else if (isUndefined == true) {
+			//cout << "We don't know if this boolean function is a Threhold Function or not (undefined)!" << endl;
+			//cout << endl;
+		}
+		else {
+			nTF++;
+			//cout << "Threshold Gate:" << endl;
+			printSingleList(thresholdGate);
+			//cout << endl;
+		}	
+	}
+
+
+	cout << "Numero de TFs identificadas: " << nTF << endl;
+	auto resultado = std::chrono::high_resolution_clock::now() - inicio;
+	long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(resultado).count();
+	cout <<  "total de Funcoes = " << f.size() << "   executado em " <<microseconds << " ms" <<endl;
+		
 	
 	return 0;
 }
