@@ -14,7 +14,6 @@ using namespace std;
 #define DONTCARE  9
 #define ISNOT_TF 999
 #define IS_UNDEFINED 9999
-//#define IS_TF 1
 
 string arquivoMinTermos("funcaoP.txt");
 
@@ -1671,41 +1670,48 @@ list <int> flow(list <int> valoresMinTermos) {
 
 int main() {
 	
+	
 	int nTF = 0;
 
 	list <list <int>> f;
 	list <int> thresholdGate;
-	list <list <int>> thresholdGatesCollection;
+	
+
 	auto inicio = std::chrono::high_resolution_clock::now();
-	f = gerarFuncoesBooleanas(5);
+	f = gerarFuncoesBooleanas(4);
+
 
 	for (auto j = f.begin(); j != f.end(); ++j) {
 		list <int> valoresMinTermos = armazenarMinTermos(*j);		
 		thresholdGate = flow(valoresMinTermos);
 		
+		cout << "Funcao booleana a ser testada: " << endl;
+		printSingleList(*j);
 		bool isNotTF = (std::find(thresholdGate.begin(), thresholdGate.end(), ISNOT_TF) != thresholdGate.end());
 		bool isUndefined = (std::find(thresholdGate.begin(), thresholdGate.end(), IS_UNDEFINED) != thresholdGate.end());
 		if (isNotTF == true) {
-			//cout << "This boolean function is not a Threshold Function!" << endl;
-			//cout << endl;
+			cout << "This boolean function is not a Threshold Function!" << endl;
+			cout << endl;
 		}
 		else if (isUndefined == true) {
-			//cout << "We don't know if this boolean function is a Threhold Function or not (undefined)!" << endl;
-			//cout << endl;
+			cout << "We don't know if this boolean function is a Threhold Function or not (undefined)!" << endl;
+			cout << endl;
 		}
 		else {
 			nTF++;
-			//cout << "Threshold Gate:" << endl;
+			cout << "Threshold Gate:" << endl;
 			printSingleList(thresholdGate);
-			//cout << endl;
+			cout << endl;
+
+			
 		}	
 	}
 
-
+	cout << "Calculando TFs de ate 4 variaveis" << endl;
 	cout << "Numero de TFs identificadas: " << nTF << endl;
 	auto resultado = std::chrono::high_resolution_clock::now() - inicio;
 	long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(resultado).count();
-	cout <<  "total de Funcoes = " << f.size() << "   executado em " <<microseconds << " ms" <<endl;
+	cout <<  "total de Funcoes = " << f.size() << "   executado em " <<microseconds << " us" <<endl;
 		
 	
 	return 0;
